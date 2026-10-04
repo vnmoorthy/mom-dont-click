@@ -2,6 +2,8 @@
 // Exa is the primary source for "what is the real site"; this map is the
 // offline fallback and a fast path for the most-impersonated names.
 
+import { sharedHostOf } from "./urls";
+
 export interface Brand {
   name: string;
   /** lower-case phrases that identify the brand in a message */
@@ -122,11 +124,13 @@ export function brandByName(name?: string | null): Brand | null {
 /** Does this registrable domain belong to the brand? */
 export function isOfficialDomain(brand: Brand | null, domain?: string): boolean {
   if (!brand || !domain) return false;
+  if (sharedHostOf(domain)) return false; // sites.google.com/whoever is whoever's page, not Google's
   return brand.domains.some((d) => domain === d || domain.endsWith("." + d));
 }
 
 /** Any well-known brand's own domain (used when a message claims no brand at all). */
 export function knownGoodDomain(domain?: string): Brand | null {
   if (!domain) return null;
+  if (sharedHostOf(domain)) return null;
   return BRANDS.find((b) => b.domains.some((d) => domain === d || domain.endsWith("." + d))) ?? null;
 }

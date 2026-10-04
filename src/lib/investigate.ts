@@ -114,7 +114,9 @@ export async function investigate(input: {
   await Promise.all(jobs);
 
   if (!out.official && brand && brand.domains.length === 0) out.brandUnknown = true;
-  if (linkDomain) {
+  // a page on user-content space (sites.google.com/…, *.pages.dev) is never "the brand's own site"
+  const userContent = !!input.primaryUrl && !!sharedHostOf(new URL(input.primaryUrl).hostname);
+  if (linkDomain && !userContent) {
     if (brand && isOfficialDomain(brand, linkDomain)) out.linkIsOfficial = true;
     else if (out.official && (linkDomain === out.official.domain || linkDomain.endsWith("." + out.official.domain))) out.linkIsOfficial = true;
     else if (!input.claimedBrand) {
@@ -183,10 +185,13 @@ export async function domainIntel(input: {
   if (tld === "invalid" || tld === "test" || tld === "example") out.notRegistered = true;
   else if (RISKY_TLDS.has(tld)) out.amber.push(`Ends in .${tld}, an ending scammers buy in bulk`);
   const shared = sharedHostOf(host);
-  if (shared && !official) out.amber.push(`Hosted on free web space (${shared}), not on a company's own site`);
+  // free hosting is only a tell when the message claims to come from a company
+  if (shared && !official && brand) out.amber.push(`Hosted on free web space (${shared}), not on a company's own site`);
 
   // brand name used as decoration: "paypal.com.account-fix.top" or "usps-redelivery.info"
-  if (brand && !official) {
+  // (user-content space under the brand's own domain gets its own, clearer finding)
+  const onBrandsOwnSpace = !!shared && !!brand && brand.domains.some((d) => shared.endsWith(d));
+  if (brand && !official && !onBrandsOwnSpace) {
     const flat = host.replace(/[^a-z0-9]/g, "");
     const names = [brand.name.toLowerCase().replace(/[^a-z0-9]/g, ""), ...brand.domains.map((d) => d.split(".")[0])];
     if (names.some((n) => n.length > 2 && flat.includes(n))) {

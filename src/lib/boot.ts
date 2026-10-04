@@ -23,7 +23,7 @@ async function handleInbound(m: mail.InboundMail): Promise<void> {
   // a reply inside a thread we already answered is a follow-up question
   const existing = await findCaseByThread(m.threadId);
   if (existing && existing.status === "done") {
-    const question = m.text.split(/\n>|\nOn .* wrote:/)[0].trim().slice(0, 1200);
+    const question = (m.replyText ?? m.text).split(/\n>|\nOn .* wrote:/)[0].trim().slice(0, 1200);
     if (!question) return;
     const history = await listMessages(existing.id);
     await addMessage({ caseId: existing.id, role: "user", text: question, via: "email" });

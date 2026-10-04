@@ -49,7 +49,7 @@ const PRESSURE: Array<{ re: RegExp; tag: string }> = [
 const CATEGORY: Array<{ re: RegExp; cat: string }> = [
   { re: /(parcel|package|delivery|redeliver|shipment|courier|tracking)/i, cat: "parcel" },
   { re: /(toll|fastrak|e-?z ?pass|sunpass)/i, cat: "toll" },
-  { re: /(grandma|grandpa|it'?s me|bail|accident|in trouble|new (phone )?number)/i, cat: "family-emergency" },
+  { re: /\b(grandma|grandpa|it'?s me\b|bail\b|accident\b|in trouble|(my )?new (phone )?number|(hi|hey) (mom|mum|dad)\b)/i, cat: "family-emergency" },
   { re: /(geek squad|norton|mcafee|antivirus|subscription has been renewed|auto-?renew|tech(nical)? support|invoice #)/i, cat: "tech-support" },
   { re: /(medicare|social security|irs|tax refund|dmv|benefits|stimulus)/i, cat: "government" },
   { re: /(bank|account (has been|is) (suspended|locked|limited)|unusual sign-?in|verify your identity|wire|debit card)/i, cat: "bank" },
@@ -230,7 +230,8 @@ export async function readMessage(input: ReadInput): Promise<ReadResult> {
   const subject = sanitise(model?.subject?.trim() || rawSubject) || "Something forwarded";
 
   const phones = [...new Set((text.match(/\+?1?[\s.-]?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/g) ?? []).map((p) => p.replace(/\D/g, "")))];
-  const pressure = [...new Set([...(model?.pressure ?? []).map((p) => String(p).trim().toLowerCase()), ...pressureRules])]
+  const modelPressure = Array.isArray(model?.pressure) ? model.pressure : [];
+  const pressure = [...new Set([...modelPressure.map((p) => String(p).trim().toLowerCase()), ...pressureRules])]
     .filter((p) => p.length > 2 && p.length < 90)
     .slice(0, 5);
 

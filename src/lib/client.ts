@@ -122,9 +122,27 @@ export function useLive(): LiveState {
       };
     };
     open();
+    // A browser allows six HTTP/1.1 connections per origin, and every screen holds one stream.
+    // A tab nobody is looking at gives its connection back; the hello snapshot re-syncs it on return.
+    let idle: ReturnType<typeof setTimeout> | null = null;
+    const onVisibility = () => {
+      if (document.hidden) {
+        idle = setTimeout(() => {
+          es?.close();
+          es = null;
+          setConnected(false);
+        }, 20_000);
+      } else {
+        if (idle) clearTimeout(idle);
+        if (!es || es.readyState === EventSource.CLOSED) open();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       closed = true;
       if (timer) clearTimeout(timer);
+      if (idle) clearTimeout(idle);
+      document.removeEventListener("visibilitychange", onVisibility);
       es?.close();
     };
   }, []);

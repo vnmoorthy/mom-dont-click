@@ -14,6 +14,11 @@ export const SHARED_HOSTS = [
   "herokuapp.com", "onrender.com", "glitch.me", "replit.app", "repl.co", "weebly.com", "wixsite.com", "blogspot.com",
   "r2.dev", "webflow.io", "square.site", "godaddysites.com", "azurewebsites.net", "appspot.com", "ngrok-free.app",
   "ngrok.app", "trycloudflare.com", "surge.sh", "framer.app", "carrd.co", "notion.site", "sites.google.com",
+  // anyone can publish under these, even though the parent domain is a household name
+  "docs.google.com", "forms.gle", "drive.google.com", "storage.googleapis.com", "firebasestorage.googleapis.com",
+  "forms.office.com", "sharepoint.com", "blob.core.windows.net", "s3.amazonaws.com", "amazonaws.com",
+  "cloudfront.net", "dropboxusercontent.com", "github.io", "githubusercontent.com", "myshopify.com", "typeform.com",
+  "jotform.com", "linktr.ee", "telegra.ph", "wordpress.com", "medium.com", "substack.com",
 ];
 
 export const SHORTENERS = new Set([

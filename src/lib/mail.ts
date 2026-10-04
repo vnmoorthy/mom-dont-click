@@ -28,7 +28,8 @@ interface InboxRef {
 
 async function createInbox(c: Client, username: string, displayName: string, clientId: string): Promise<InboxRef> {
   const attempt = async (u?: string) => {
-    const inbox = await c.inboxes.create({ ...(u ? { username: u } : {}), displayName, clientId: u ? `${clientId}-${u}` : clientId });
+    // clientId is the idempotency key: keep it stable so a restart finds the same inbox instead of minting another
+    const inbox = await c.inboxes.create({ ...(u ? { username: u } : {}), displayName, clientId });
     return { inboxId: inbox.inboxId as string, email: ((inbox.email as string) ?? (inbox.inboxId as string)) as string };
   };
   try {
@@ -55,7 +56,7 @@ export async function ensureInbox(): Promise<InboxRef | null> {
     if (!ok) ref = null;
   }
   if (!ref) {
-    ref = await createInbox(c, env.agentmailUsername, env.agentmailDisplayName, "mdc-agent");
+    ref = await createInbox(c, env.agentmailUsername, env.agentmailDisplayName, `mdc-agent-${env.agentmailUsername}`);
     await kvSet(key, ref);
   }
   runtime.inboxId = ref.inboxId;
@@ -90,6 +91,8 @@ export interface InboundMail {
   html?: string;
   timestamp: number;
   isReply: boolean;
+  /** only the newest text, without the quoted thread: used for follow-up questions, never for analysis */
+  replyText?: string;
   imageDataUrl?: string;
 }
 
@@ -98,7 +101,8 @@ export async function fetchInbound(): Promise<InboundMail[]> {
   const inbox = await ensureInbox();
   if (!inbox) return [];
   const c = await client();
-  const res = await c.inboxes.messages.list(inbox.inboxId, { limit: 25 });
+  // forwarded scams are exactly the mail a spam filter flags, so the spam folder is read too
+  const res = await c.inboxes.messages.list(inbox.inboxId, { limit: 25, includeSpam: true });
   runtime.lastPollAt = Date.now();
   const items = ((res.messages ?? []) as Array<Record<string, unknown>>).filter((m) => {
     const labels = (m.labels as string[] | undefined) ?? [];
@@ -124,11 +128,12 @@ export async function fetchInbound(): Promise<InboundMail[]> {
 export async function loadBody(m: InboundMail): Promise<InboundMail> {
   const c = await client();
   const full = await c.inboxes.messages.get(m.inboxId, m.messageId);
-  m.text = String(full.text ?? full.extractedText ?? full.preview ?? "");
+  // Analysis always uses the WHOLE body. Mail clients set In-Reply-To on forwards too, and the
+  // "newest text only" extraction would keep mom's one-line note and drop the scam underneath it.
+  m.text = String(full.text ?? (full.html ? "" : (full.preview ?? "")));
   m.html = full.html ? String(full.html) : undefined;
   m.isReply = m.isReply || !!full.inReplyTo;
-  // the newest text of a reply, without the quoted thread, when AgentMail extracted it
-  if (m.isReply && full.extractedText) m.text = String(full.extractedText);
+  m.replyText = full.extractedText ? String(full.extractedText) : undefined;
   const image = ((full.attachments ?? []) as Array<Record<string, unknown>>).find((a) => String(a.contentType ?? "").startsWith("image/") && Number(a.size ?? 0) < 6_000_000 && Number(a.size ?? 0) > 15_000);
   if (image && m.text.replace(/\s+/g, "").length < 400) {
     try {
@@ -148,7 +153,7 @@ export async function loadBody(m: InboundMail): Promise<InboundMail> {
 // Outbound limits, so a public form cannot be used to mail strangers at volume.
 const HOUR = 3600_000;
 const sentLog: { all: number[]; per: Map<string, number[]> } = ((globalThis as unknown as { __mdcSent?: { all: number[]; per: Map<string, number[]> } }).__mdcSent ??= { all: [], per: new Map() });
-const LIMITS = { perHour: 150, perRecipientPerHour: 5, perThreadPerHour: 12 };
+const LIMITS = { perHour: 200, perRecipientPerHour: 12, perThreadPerHour: 12 };
 
 function allow(key: string, max: number): boolean {
   const now = Date.now();
@@ -172,7 +177,8 @@ export async function reply(inboxId: string, messageId: string, body: { text: st
 export async function send(to: string, subject: string, body: { text: string; html: string }, fromInboxId?: string): Promise<void> {
   const inbox = await ensureInbox();
   if (!inbox) throw new Error("Email is not configured");
-  if (!allow(`to:${to.toLowerCase()}`, LIMITS.perRecipientPerHour)) throw new Error("Email limit reached for this address");
+  // the limits protect strangers; the app's own "Mom" inbox writing to the agent's inbox is not a stranger
+  if (!fromInboxId && !allow(`to:${to.toLowerCase()}`, LIMITS.perRecipientPerHour)) throw new Error("Email limit reached for this address");
   const c = await client();
   await c.inboxes.messages.send(fromInboxId ?? inbox.inboxId, { to: [to], subject, ...body });
 }

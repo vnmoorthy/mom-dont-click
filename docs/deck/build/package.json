@@ -1,0 +1,17 @@
+{
+  "name": "mom-dont-click-deck",
+  "version": "1.0.0",
+  "description": "Generator for the Mom, Don't Click pitch deck",
+  "main": "build-deck.js",
+  "scripts": {
+    "build": "./build.sh"
+  },
+  "dependencies": {
+    "pptxgenjs": "^4.0.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-icons": "^5.7.0",
+    "sharp": "^0.35.5"
+  },
+  "private": true
+}

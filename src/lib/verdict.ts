@@ -26,11 +26,20 @@ export function languageEvidence(c: Pick<CaseRecord, "pressure" | "category" | "
   if (/don'?t tell|dont tell|do not tell/i.test(text) && /gift ?cards?/i.test(text)) {
     out.push(ev("language", "red", "Asks you to keep it secret from family", "Reader"));
   }
-  if (c.category === "family-emergency") {
+  const asksForMoney = /(\$\s?\d|\bmoney\b|\bsend\b[^.\n]{0,40}\b(zelle|venmo|cash ?app|paypal|wire|transfer)|\bbail\b|gift ?cards?|\bloan\b|\bpay\b|\bborrow\b)/i.test(text);
+  if (c.category === "family-emergency" && (asksForMoney || c.pressure.length > 0)) {
     out.push(ev("language", "red", "A 'relative in trouble' who needs money right now is the classic grandparent scam", "Reader", "Hang up and call your relative on the number you already have."));
   }
-  if (c.category === "tech-support" && phones.length && c.links.length === 0) {
-    out.push(ev("language", "red", "A surprise invoice with a phone number to 'cancel' is a refund scam", "Reader", "The 'cancellation desk' asks for remote access to your computer or your bank login."));
+  if (/\b(new (phone )?number|lost my phone|broke my phone|phone (is )?broken)\b/i.test(text) && asksForMoney) {
+    out.push(ev("language", "red", "A 'new number' followed by a request for money is the 'Hi Mom' scam", "Reader", "Call the old number. It will still work."));
+  }
+  if (/(zelle|venmo|cash ?app|moneygram|western union|wire transfer)/i.test(text) && /\b(send|transfer|pay|move)\b/i.test(text) && !out.some((e) => /cannot be traced/.test(e.title))) {
+    out.push(ev("language", "amber", "Asks you to move money with an app that cannot be reversed", "Reader"));
+  }
+  // a surprise charge + a number to call: the refund scam, whatever brand it borrows and even if a real link is included
+  const surpriseCharge = /(charged?|purchase|payment|order|refund|subscription|renew(ed|al)?|invoice|fraud(ulent)?|unauthori[sz]ed)/i.test(text);
+  if (phones.length && surpriseCharge && /\b(call|dial|contact|reach)\b/i.test(text) && (c.category === "tech-support" || c.category === "invoice" || /did(n'?t| not) (authori[sz]e|make|place)|if (this|it) was(n'?t| not) you|to (cancel|dispute|stop)/i.test(text))) {
+    out.push(ev("language", "red", "A surprise charge with a phone number to call is a refund scam", "Reader", "The 'cancellation desk' asks for remote access to your computer or your bank login."));
   }
   if (/@(gmail|outlook|hotmail|yahoo|aol)\.com/i.test(text) && /(billing|invoice|support|security|department|dept)/i.test(text) && c.category !== "family-emergency") {
     out.push(ev("language", "amber", "Sent from a free email account, not a company address", "Reader"));
@@ -42,7 +51,7 @@ export function languageEvidence(c: Pick<CaseRecord, "pressure" | "category" | "
   if (c.category === "prize" || /you('ve| have) (won|been selected)|today'?s winner/i.test(text)) {
     out.push(ev("language", "amber", "Says you won something you never entered", "Reader"));
   }
-  if (/reply y|exit and reopen/i.test(text)) {
+  if (/exit and reopen|reply (y|yes|1)\b[^.\n]{0,80}(reopen|activate|link|open)/i.test(text) && c.links.length > 0) {
     out.push(ev("language", "red", "Tells you to reply so your phone will unlock the link", "Reader", "Phones disable links from unknown senders. This instruction is a trick to switch that protection off."));
   }
   return out;
@@ -86,7 +95,13 @@ export function investigationEvidence(inv: Investigation, intel: DomainIntel, c:
     if (inv.linkIsOfficial) {
       out.push(ev("search", "calm", `The link goes to ${brand ?? inv.brand?.name ?? "the company"}'s own website`, inv.official?.via === "Exa" ? "Exa" : "Known sites", undefined, inv.official?.url));
     } else if (inv.official && brand) {
-      out.push(ev("search", "red", `Not ${brand}'s website. Theirs is ${inv.official.domain}`, inv.official.via === "Exa" ? "Exa" : "Known sites", `The link goes to ${intel.domain ?? "another address"} instead.`, inv.official.url));
+      // a page on the brand's user-content space (sites.google.com/…) is somebody else's page
+      const squatting = !!intel.domain && intel.domain.endsWith(`.${inv.official.domain}`);
+      out.push(
+        squatting
+          ? ev("search", "red", `Anyone can publish a page at ${intel.domain}. It is not ${brand}'s own page`, "Known sites", undefined, inv.official.url)
+          : ev("search", "red", `Not ${brand}'s website. Theirs is ${inv.official.domain}`, inv.official.via === "Exa" ? "Exa" : "Known sites", `The link goes to ${intel.domain ?? "another address"} instead.`, inv.official.url),
+      );
     } else if (inv.brandUnknown && brand) {
       out.push(ev("search", "red", `No company called "${brand}" could be found`, inv.searched ? "Exa" : "Known sites"));
     }
@@ -195,7 +210,7 @@ ${evidence.map((e) => `- [${e.tone}] ${e.title}${e.detail ? ` (${e.detail})` : "
   });
   if (!out?.headline || !out.headline.trim().toLowerCase().startsWith(opener.toLowerCase().slice(0, 8))) return fallback;
   if (level === "NO_RED_FLAGS" && /\b(safe|legit|genuine|is real)\b/i.test(out.headline)) return fallback;
-  const reasons = (out.reasons ?? []).map((r) => String(r).trim()).filter(Boolean).slice(0, 3);
+  const reasons = (Array.isArray(out.reasons) ? out.reasons : []).map((r) => String(r).trim()).filter(Boolean).slice(0, 3);
   return {
     headline: out.headline.trim(),
     reasons: reasons.length >= 2 ? reasons : fallback.reasons,

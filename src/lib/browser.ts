@@ -10,7 +10,7 @@ import type { Browser, BrowserContext, Page } from "playwright-core";
 import { browserTier, env, runtime } from "./config";
 import { pushFrame } from "./bus";
 import { assertPublicUrl, isLoopbackUrl, isOwnTrainingPage, looksInternal, resolvesPublic, safeParse } from "./urls";
-import type { BrowserReport } from "./types";
+import type { BrowserReport, BrowserTier } from "./types";
 
 export interface Detonation {
   report: BrowserReport;
@@ -29,6 +29,13 @@ export interface DetonateHooks {
   quiet?: boolean;
   /** presenter seeds jump the queue so the stage is never starved by the room */
   priority?: boolean;
+  /** set by the browser tiers: closes the session so a hung page cannot hold a slot forever */
+  cancel?: () => Promise<void>;
+}
+
+/** Run something inside the page, but never wait on a busy page for more than a few seconds. */
+function within<T>(p: Promise<T>, ms: number, what: string): Promise<T> {
+  return Promise.race([p, new Promise<never>((_, rej) => setTimeout(() => rej(new Error(`Timeout: ${what}`)), ms))]);
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -96,7 +103,7 @@ function scanPage(): { asks: string[]; title: string; text: string; inputs: numb
     layer.style.cssText = "position:absolute;left:0;top:0;width:0;height:0;z-index:2147483647;pointer-events:none";
     document.documentElement.appendChild(layer);
   }
-  layer.innerHTML = "";
+  layer.replaceChildren(); // not innerHTML: pages with a Trusted Types policy reject that
   const inputs = Array.from(document.querySelectorAll<HTMLInputElement>("input, select, textarea"));
   let visible = 0;
   for (const el of inputs) {
@@ -281,7 +288,7 @@ async function drive(
     hooks.onReport(report);
 
     step("Looking at what the page asks for");
-    let scan = await page.evaluate(scanPage);
+    let scan = await within(page.evaluate(scanPage), 6000, "the page was too busy to inspect");
     pageText = scan.text;
     challenge = /just a moment|attention required|verify you are human|checking your browser|captcha/i.test(`${scan.title} ${scan.text.slice(0, 400)}`) && scan.inputs <= 1;
     asksByStep.push(scan.asks);
@@ -300,7 +307,7 @@ async function drive(
         await sleep(350);
         await submit.click({ timeout: 4000 }).catch(() => {});
         await sleep(1100);
-        scan = await page.evaluate(scanPage);
+        scan = await within(page.evaluate(scanPage), 6000, "the page was too busy to inspect");
         if (scan.inputs > 0) {
           asksByStep.push(scan.asks);
           for (const a of scan.asks) if (!report.asksFor.includes(a)) report.asksFor.push(a);
@@ -317,7 +324,7 @@ async function drive(
       }
       await page.evaluate(() => window.scrollTo({ top: 0, behavior: "smooth" })).catch(() => {});
       await sleep(500);
-      const again = await page.evaluate(scanPage).catch(() => null);
+      const again = await within(page.evaluate(scanPage), 5000, "inspect").catch(() => null);
       if (again) for (const a of again.asks) if (!report.asksFor.includes(a)) report.asksFor.push(a);
       if (again && asksByStep[0].length === 0) asksByStep[0] = again.asks;
     }
@@ -348,6 +355,10 @@ async function viaKernel(url: string, caseId: string, report: BrowserReport, hoo
     report.liveViewUrl = session.browser_live_view_url ?? undefined;
     hooks.onReport(report);
     browser = await chromium.connectOverCDP(session.cdp_ws_url, { timeout: 15_000 });
+    const connected = browser;
+    hooks.cancel = async () => {
+      await connected.close().catch(() => {});
+    };
     const context = browser.contexts()[0] ?? (await browser.newContext());
     const page = context.pages()[0] ?? (await context.newPage());
     return await drive(page, url, caseId, report, hooks);
@@ -383,6 +394,10 @@ async function viaPlaywright(url: string, caseId: string, report: BrowserReport,
       return route.continue();
     });
     const page = await context.newPage();
+    const opened = context;
+    hooks.cancel = async () => {
+      await opened.close().catch(() => {});
+    };
     return await drive(page, url, caseId, report, hooks);
   } finally {
     await context?.close().catch(() => {});
@@ -454,7 +469,7 @@ export async function detonate(url: string, caseId: string, hooks: DetonateHooks
   const report: BrowserReport = { tier: "none", live: false, redirectChain: [], asksFor: [], steps: [], hasScreenshot: false };
   // only our own training page, on this machine, is ever opened locally when a cloud browser is available
   const localUrl = isLoopbackUrl(url) && isOwnTrainingPage(url);
-  let tier = hooks.quiet ? "fetch" : browserTier();
+  let tier: BrowserTier = hooks.quiet ? "fetch" : browserTier();
   if (tier === "kernel" && localUrl) tier = "playwright"; // a cloud browser cannot see this laptop
   const empty = { asksByStep: [[]] as string[][], pageText: "", challenge: false };
 
@@ -466,7 +481,7 @@ export async function detonate(url: string, caseId: string, hooks: DetonateHooks
   report.startedAt = Date.now();
   let result: Omit<Detonation, "report"> = empty;
   try {
-    const attempt = async (t: typeof tier) => {
+    const attempt = async (t: BrowserTier) => {
       report.tier = t;
       report.live = t !== "fetch";
       hooks.onReport(report);
@@ -474,8 +489,25 @@ export async function detonate(url: string, caseId: string, hooks: DetonateHooks
       if (t === "playwright") return viaPlaywright(url, caseId, report, hooks);
       return viaFetch(url, report, hooks);
     };
-    const withBudget = <T,>(p: Promise<T>) =>
-      Promise.race([p, new Promise<never>((_, rej) => setTimeout(() => rej(new Error("Timeout: budget exceeded")), BUDGET_MS))]);
+    const withBudget = async <T,>(p: Promise<T>): Promise<T> => {
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        return await Promise.race([
+          p,
+          new Promise<never>((_, rej) => {
+            timer = setTimeout(() => rej(new Error("Timeout: budget exceeded")), BUDGET_MS);
+          }),
+        ]);
+      } catch (err) {
+        // out of time or broken: close the session so the attempt unwinds and its slot is really free
+        await hooks.cancel?.().catch(() => {});
+        p.catch(() => {});
+        throw err;
+      } finally {
+        if (timer) clearTimeout(timer);
+        hooks.cancel = undefined;
+      }
+    };
     try {
       result = await withBudget(attempt(tier));
     } catch (err) {
@@ -485,13 +517,22 @@ export async function detonate(url: string, caseId: string, hooks: DetonateHooks
         report.unreachable = classifyFailure(message);
         if (report.redirectChain.length === 0) report.redirectChain = [url];
       } else {
-        // the browser itself failed (launch, CDP, quota): fall down a tier rather than fail the case
+        // the browser itself failed (launch, CDP, quota): fall down ONE tier at a time rather than fail the case.
+        // A hung page is not retried in another browser; it goes straight to the plain read.
         console.error(`[browser] ${tier} failed, falling back:`, message);
-        report.steps.push({ label: "Browser unavailable, reading the page directly instead", at: Date.now() });
-        result = await withBudget(attempt(tier === "kernel" && !localUrl ? "fetch" : "fetch")).catch((e) => {
-          report.unreachable = classifyFailure((e as Error)?.message ?? String(e));
-          return empty;
-        });
+        const hung = /budget exceeded/.test(message);
+        const next: BrowserTier = tier === "kernel" && !hung && runtime.localChromium !== false ? "playwright" : "fetch";
+        report.steps.push({ label: next === "playwright" ? "Cloud browser unavailable, using the local sandbox browser" : "Browser unavailable, reading the page directly instead", at: Date.now() });
+        result = await withBudget(attempt(next))
+          .catch((e) => {
+            if (next === "fetch") throw e;
+            report.steps.push({ label: "Browser unavailable, reading the page directly instead", at: Date.now() });
+            return withBudget(attempt("fetch"));
+          })
+          .catch((e) => {
+            report.unreachable = classifyFailure((e as Error)?.message ?? String(e));
+            return empty;
+          });
       }
     }
   } finally {

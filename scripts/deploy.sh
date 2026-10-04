@@ -29,6 +29,12 @@ if [ -f .env.local ]; then
     key="${line%%=*}"
     val="${line#*=}"
     case "$key" in PUBLIC_URL|MDC_SIMULATE_ALERTS|PGLITE_DIR|CHROMIUM_PATH) continue ;; esac
+    # dashboards often show KEY="value": strip the quotes and any stray carriage return, as dotenv does
+    val="${val%$'\r'}"
+    case "$val" in
+      \"*\") val="${val:1:${#val}-2}" ;;
+      \'*\') val="${val:1:${#val}-2}" ;;
+    esac
     [ -n "$val" ] && SECRETS+=("${key}=${val}")
   done < <(grep -E '^[A-Z_]+=.+' .env.local || true)
 fi

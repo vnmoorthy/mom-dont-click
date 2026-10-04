@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { decideLevel, ev, languageEvidence } from "@/lib/verdict";
+import { investigate } from "@/lib/investigate";
 import type { Evidence } from "@/lib/types";
 
 const red = (t = "red") => ev("browser", "red", t, "test");
@@ -54,5 +55,26 @@ describe("languageEvidence", () => {
   it("stays quiet on an ordinary receipt", () => {
     const e = languageEvidence({ ...base, category: "parcel", rawText: "Your order has shipped and arrives Thursday.", links: ["https://www.amazon.com/x"] }, []);
     expect(e).toEqual([]);
+  });
+});
+
+describe("investigate: whose website is it", () => {
+  const base = { category: "account", pressure: [], phones: [], quiet: true };
+  it("accepts the brand's own domain", async () => {
+    const r = await investigate({ ...base, claimedBrand: "Google", primaryUrl: "https://accounts.google.com/signin" });
+    expect(r.linkIsOfficial).toBe(true);
+  });
+  it("does not accept user-content space under the brand's domain", async () => {
+    const r = await investigate({ ...base, claimedBrand: "Google", primaryUrl: "https://sites.google.com/view/secure-account-check" });
+    expect(r.linkIsOfficial).toBe(false);
+  });
+  it("does not accept a lookalike", async () => {
+    const r = await investigate({ ...base, claimedBrand: "PayPal", primaryUrl: "https://paypal.com.account-resolution.top/login" });
+    expect(r.linkIsOfficial).toBe(false);
+  });
+  it("names a well-known site on a bare link, but never from a word in the path", async () => {
+    const r = await investigate({ ...base, primaryUrl: "https://github.com/login" });
+    expect(r.linkIsOfficial).toBe(true);
+    expect(r.brand?.name).toBe("GitHub");
   });
 });

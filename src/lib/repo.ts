@@ -10,9 +10,12 @@ import type { CaseMessage, CaseRecord, GuardianPublic } from "./types";
 interface Mem {
   cases: Map<string, CaseRecord>;
   writes: Map<string, Promise<unknown>>;
+  /** cases created at or before this moment were wiped by a reset and must not come back */
+  resetAt: number;
 }
 const g = globalThis as unknown as { __mdcMem?: Mem };
-const mem: Mem = (g.__mdcMem ??= { cases: new Map(), writes: new Map() });
+const mem: Mem = (g.__mdcMem ??= { cases: new Map(), writes: new Map(), resetAt: 0 });
+mem.resetAt ??= 0;
 
 /** What leaves the server on shared screens: no raw text, masked sender, no secrets. */
 export function publicCase(c: CaseRecord): CaseRecord {
@@ -57,6 +60,8 @@ function persist(c: CaseRecord, fp?: string | null): void {
 export function saveCase(c: CaseRecord, opts: { fp?: string | null; quiet?: boolean } = {}): void {
   c.updatedAt = Date.now();
   if (opts.quiet) return;
+  // a case that was still running when the wall was reset finishes quietly and leaves no trace
+  if (c.createdAt <= mem.resetAt) return;
   mem.cases.set(c.id, c);
   emit({ type: "case", case: publicCase(c) });
   persist(c, opts.fp);
@@ -183,11 +188,11 @@ export async function listGuardians(): Promise<Guardian[]> {
   return rows.map(toGuardian);
 }
 
-/** Guardians watching this sender. `null` sender = the demo Mom persona. */
+/** Guardians watching this sender, newest first. `null` sender = the demo Mom persona. */
 export async function guardiansFor(senderEmail: string | null): Promise<Guardian[]> {
   const rows = senderEmail
-    ? await q(`select * from mdc_guardians where lower(parent_email) = $1`, [senderEmail.toLowerCase()])
-    : await q(`select * from mdc_guardians where parent_email is null order by created_at desc limit 5`);
+    ? await q(`select * from mdc_guardians where lower(parent_email) = $1 order by created_at desc limit 50`, [senderEmail.toLowerCase()])
+    : await q(`select * from mdc_guardians where parent_email is null order by created_at desc limit 200`);
   return rows.map(toGuardian);
 }
 
@@ -219,7 +224,8 @@ export async function counts(): Promise<{ cases: number; guardians: number }> {
 }
 
 /** Clear the wall: cases, screenshots and follow-ups. Guardians and settings stay. */
-export async function resetCases(): Promise<void> {
+export async function resetCases(opts: { guardians?: boolean } = {}): Promise<void> {
+  mem.resetAt = Date.now();
   await Promise.all([...mem.writes.values()]).catch(() => {});
   mem.cases.clear();
   mem.writes.clear();
@@ -227,5 +233,6 @@ export async function resetCases(): Promise<void> {
   await q(`delete from mdc_cases`);
   await q(`delete from mdc_shots`);
   await q(`delete from mdc_messages`);
+  if (opts.guardians) await q(`delete from mdc_guardians`);
   emit({ type: "reset" });
 }

@@ -55,3 +55,6 @@ tsconfig.tsbuildinfo
 
 # raw screen recording (the trimmed mp4 and gif are kept)
 /docs/media/wall-demo.webm
+
+# Office lock files
+~$*

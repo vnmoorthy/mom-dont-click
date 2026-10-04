@@ -17,7 +17,11 @@ export async function POST(req: Request) {
     // a real email, from the "Mom" inbox to the agent's inbox, picked up by the poller
     const [inbox, mom] = await Promise.all([mail.ensureInbox(), mail.ensureMomInbox()]);
     if (!inbox || !mom) return fail("Email is not configured", 409);
-    await mail.send(inbox.email, seed.subject, { text: seed.text, html: seed.html ?? `<pre style="font:inherit;white-space:pre-wrap">${seed.text.replace(/</g, "&lt;")}</pre>` }, mom.inboxId);
+    try {
+      await mail.send(inbox.email, seed.subject, { text: seed.text, html: seed.html ?? `<pre style="font:inherit;white-space:pre-wrap">${seed.text.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</pre>` }, mom.inboxId);
+    } catch (err) {
+      return fail(`The email could not be sent: ${((err as Error)?.message ?? "unknown error").slice(0, 120)}`, 502);
+    }
     return json({ id: null, viaEmail: true });
   }
   const c = startCase({

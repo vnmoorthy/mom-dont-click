@@ -15,8 +15,8 @@ import { type ReadResult, fingerprints, readMessage } from "./reader";
 import { type Detonation, browserQueueLength, detonate } from "./browser";
 import { type DomainIntel, type Investigation, domainIntel, investigate } from "./investigate";
 import { askEvidence, decideLevel, ev, investigationEvidence, languageEvidence, visitEvidence, writeVerdict } from "./verdict";
-import { brandByName, isOfficialDomain, knownGoodDomain } from "./brands";
-import { domainOf, isOwnTrainingPage, maskEmail, safeParse } from "./urls";
+import { brandByName, findBrand, isOfficialDomain, knownGoodDomain } from "./brands";
+import { domainOf, isOwnTrainingPage, maskEmail, safeParse, sharedHostOf } from "./urls";
 import * as mail from "./mail";
 import type { CaseChannel, CaseRecord, TraceStep } from "./types";
 
@@ -90,6 +90,15 @@ async function stepRead(ctx: Ctx): Promise<void> {
   await traced(ctx, "read-message", readerTool, "Reading what was sent", async () => {
     const text = input.url && !input.text ? input.url : (input.text ?? "");
     const r = await readMessage({ subject: input.subject, text, html: input.html, imageDataUrl: input.imageDataUrl });
+    if (input.url && !input.text) {
+      // a bare link claims nothing. Words in its path or query ("/search?q=amazon") are not a sender;
+      // only a brand in the host name itself counts ("paypal.com.account-fix.top").
+      const inHost = findBrand((safeParse(input.url)?.hostname ?? "").replace(/[.\-_]/g, " "));
+      r.claimedBrand = inHost?.name;
+      r.category = inHost?.category ?? "other";
+      r.pressure = [];
+      r.phones = [];
+    }
     ctx.read = r;
     c.subject = input.url && !input.text ? `A link to ${domainOf(input.url) ?? "a website"}` : r.subject;
     c.rawText = r.text || text;
@@ -111,13 +120,20 @@ async function stepRead(ctx: Ctx): Promise<void> {
     c.evidence.push(...languageEvidence(c, r.phones));
   });
 
+  // reading failed outright: never let "we saw nothing" pass for "nothing to see"
+  if (!ctx.read) {
+    ctx.unreadable = true;
+    c.evidence.push(ev("language", "amber", "We could not read this message properly", "Reader", "Something went wrong while reading it, so we are being careful."));
+  }
+
   // memory: have we answered this exact scam already?
   if (!ctx.quiet && ctx.fps.length) {
     const memory = capabilities().db === "neon" ? "Neon" : "Postgres";
     const prior = await traced(ctx, "recall", memory, "Checking whether we have seen this before", () => findSeenBefore(ctx.fps, c.id));
     if (prior && prior.verdict) {
       const ago = Math.max(1, Math.round((Date.now() - prior.createdAt) / 1000));
-      const when = ago < 90 ? `${ago} seconds ago` : ago < 5400 ? `${Math.round(ago / 60)} minutes ago` : `${Math.round(ago / 3600)} hours ago`;
+      const plural = (n: number, unit: string) => `${n} ${unit}${n === 1 ? "" : "s"} ago`;
+      const when = ago < 90 ? plural(ago, "second") : ago < 5400 ? plural(Math.round(ago / 60), "minute") : plural(Math.round(ago / 3600), "hour");
       c.seenBefore = { caseId: prior.id, at: prior.createdAt, subject: prior.subject };
       c.verdict = prior.verdict;
       c.headline = prior.headline;
@@ -126,7 +142,8 @@ async function stepRead(ctx: Ctx): Promise<void> {
       c.officialUrl = prior.officialUrl;
       c.evidence = [
         ev("memory", "red", `Seen before. Same scam as ${when}`, memory, "We recognised the address and answered from memory instead of opening it again."),
-        ...prior.evidence.filter((e) => e.tone === "red").slice(0, 3).map((e) => ({ ...e, id: nanoid(8), at: Date.now() })),
+        // the original findings, not an earlier "seen before" chip
+        ...prior.evidence.filter((e) => e.tone === "red" && e.kind !== "memory").slice(0, 3).map((e) => ({ ...e, id: nanoid(8), at: Date.now() })),
       ];
       ctx.short = true;
     }
@@ -164,6 +181,10 @@ async function stepOpenLink(ctx: Ctx): Promise<void> {
       },
     });
     c.evidence.push(...visitEvidence(ctx.det, ctx.officialGuess, hasAsk));
+    // credit the tool that actually opened the page (a tier can fall back mid-run)
+    const used = ctx.det.report.tier;
+    const mine = c.trace.find((t) => t.step === "open-link" && !t.endedAt);
+    if (mine) mine.tool = used === "kernel" ? "Kernel" : used === "playwright" ? "Sandbox browser" : "Safe fetch";
     if (ctx.det.shot && !ctx.quiet) await saveShot(c.id, ctx.det.shot);
   });
 }
@@ -201,7 +222,9 @@ async function stepDecide(ctx: Ctx): Promise<void> {
     const intel: DomainIntel = ctx.intel ?? { red: [], amber: [] };
     // Genuine mail often uses click-tracking links. What matters is where the browser actually landed.
     const landed = ctx.det && !ctx.det.report.unreachable ? domainOf(ctx.det.report.finalUrl ?? "") : undefined;
-    if (!inv.linkIsOfficial && landed && landed !== c.domain) {
+    // (a page on user-content space that bounces to its host's front door proves nothing about the page)
+    const userContent = !!sharedHostOf(safeParse(c.primaryUrl ?? "")?.hostname ?? "");
+    if (!inv.linkIsOfficial && landed && landed !== c.domain && !userContent) {
       const brand = brandByName(c.claimedBrand);
       const landedOfficial = c.claimedBrand
         ? isOfficialDomain(brand, landed) || (!!inv.official && (landed === inv.official.domain || landed.endsWith("." + inv.official.domain)))
@@ -243,6 +266,10 @@ async function stepDecide(ctx: Ctx): Promise<void> {
     if (inv.linkIsOfficial && !ctx.officialGuess) {
       for (const e of c.evidence) if (e.kind === "browser" && e.tone !== "neutral") e.tone = "neutral";
     }
+    // Scam reports only corroborate. A search for "<brand> scam warning" always finds something,
+    // so on their own, or against the brand's own site, they say nothing about this message.
+    const otherwiseSuspicious = c.evidence.some((e) => e.tone === "red" || e.tone === "amber") || intel.red.length > 0 || intel.amber.length > 0 || (!!c.claimedBrand && !!inv.official && !inv.linkIsOfficial) || inv.brandUnknown;
+    if (inv.linkIsOfficial || !otherwiseSuspicious) inv.reports = [];
     c.evidence.push(...investigationEvidence(inv, intel, c));
     // strongest first, so every screen leads with the reason that matters
     const order = { red: 0, amber: 1, calm: 2, neutral: 3 } as const;
@@ -259,10 +286,11 @@ async function stepDecide(ctx: Ctx): Promise<void> {
       (e) => e.tone === "red" && (e.kind === "browser" || e.kind === "domain" || (e.kind === "search" && /^(Not |No company)/.test(e.title))),
     );
     if (!implicated || knownGoodDomain(c.domain) || inv.linkIsOfficial) ctx.fps = ctx.fps.filter((f) => !f.startsWith("d:"));
-    if (ctx.unreadable) {
+    if (ctx.unreadable && level === "NO_RED_FLAGS") {
+      const picture = !!ctx.input.imageDataUrl;
       c.verdict = "TREAT_AS_SCAM";
-      c.headline = "Treat this as a scam for now. We could not read the screenshot.";
-      c.reasons = ["We could not read the words in this picture, so we could not check it."];
+      c.headline = picture ? "Treat this as a scam for now. We could not read the screenshot." : "Treat this as a scam for now. We could not read the message.";
+      c.reasons = [picture ? "We could not read the words in this picture, so we could not check it." : "We could not read this message properly, so we could not check it."];
       c.advice = "Paste the text of the message, or the link, and we will check it properly.";
       return;
     }
@@ -299,24 +327,28 @@ async function stepRespond(ctx: Ctx): Promise<void> {
       if (input.senderEmail && input.senderEmail !== DEMO_MOM.email) watchers.push(...(await guardiansFor(input.senderEmail)));
       if (input.demoMom) watchers.push(...(await guardiansFor(null)));
       const sent: NonNullable<CaseRecord["guardianAlerted"]> = [];
+      const done = new Set<string>();
+      let emails = 0;
       for (const w of watchers) {
-        if (sent.some((s) => s.emailMasked === maskEmail(w.guardianEmail))) continue;
-        try {
-          // two ways to reach a guardian: their open /guard page, and email
-          const onScreen = guardianOnline(w.id);
-          if (onScreen) emit({ type: "alert", guardianId: w.id, caseId: c.id, line: mail.guardianLine(c, w.parentName), at: Date.now() });
-          let emailed = false;
-          if (canMail) {
+        if (done.has(w.guardianEmail)) continue;
+        done.add(w.guardianEmail);
+        // two ways to reach a guardian: their open /guard page (everyone who is listening), and email (the newest few)
+        const onScreen = guardianOnline(w.id);
+        if (onScreen) emit({ type: "alert", guardianId: w.id, caseId: c.id, line: mail.guardianLine(c, w.parentName), at: Date.now() });
+        let emailed = false;
+        if (canMail && emails < 8) {
+          try {
             const m = mail.guardianEmail(c, w.parentName);
             await mail.send(w.guardianEmail, m.subject, { text: m.text, html: m.html });
             emailed = true;
+            emails++;
+          } catch (err) {
+            console.error("[pipeline] guardian email failed", (err as Error)?.message ?? err);
           }
-          // nothing delivered, nothing claimed
-          if (!emailed && !onScreen && process.env.MDC_SIMULATE_ALERTS !== "1") continue;
-          sent.push({ name: w.parentName, emailMasked: maskEmail(w.guardianEmail), at: Date.now(), via: emailed ? "email" : "screen" });
-        } catch (err) {
-          console.error("[pipeline] guardian alert failed", (err as Error)?.message ?? err);
         }
+        // nothing delivered, nothing claimed
+        if (!emailed && !onScreen && process.env.MDC_SIMULATE_ALERTS !== "1") continue;
+        if (sent.length < 6) sent.push({ name: w.parentName, emailMasked: maskEmail(w.guardianEmail), at: Date.now(), via: emailed ? "email" : "screen" });
       }
       if (sent.length) c.guardianAlerted = sent;
     }

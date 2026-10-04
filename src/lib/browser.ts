@@ -167,7 +167,7 @@ function classifyFailure(message: string): string {
   if (/ERR_CERT|certificate|SSL/i.test(message)) return "The page's security certificate is broken.";
   if (/ERR_CONNECTION|ECONNREFUSED|ECONNRESET/i.test(message)) return "The server refused the connection.";
   if (/Timeout|timed out|aborted/i.test(message)) return "The page never finished loading. Some scam pages hide from scanners.";
-  if (/private network|Unusual port|Not a web address/i.test(message)) return "That address is not a public web page.";
+  if (/private network|Unusual port|Not a web address|ERR_BLOCKED_BY_CLIENT/i.test(message)) return "That address is not a public web page.";
   return "The page could not be opened.";
 }
 
@@ -305,10 +305,16 @@ async function drive(
         step("Typing obviously fake details to see what happens next");
         await canaryFill(page);
         await sleep(350);
-        await submit.click({ timeout: 4000 }).catch(() => {});
+        const fieldNames = () =>
+          page.evaluate(() => Array.from(document.querySelectorAll("form input"), (el) => (el as HTMLInputElement).name).join(",")).catch(() => "");
+        const before = await fieldNames();
+        // the boxes drawn for step 1 must not hang over step 2 while it loads
+        await page.evaluate(() => document.getElementById("__mdc_layer")?.replaceChildren()).catch(() => {});
+        const clicked = await submit.click({ timeout: 8000 }).then(() => true, () => false);
         await sleep(1100);
         scan = await within(page.evaluate(scanPage), 6000, "the page was too busy to inspect");
-        if (scan.inputs > 0) {
+        // only report a second step if the form really moved on
+        if (clicked && scan.inputs > 0 && (await fieldNames()) !== before) {
           asksByStep.push(scan.asks);
           for (const a of scan.asks) if (!report.asksFor.includes(a)) report.asksFor.push(a);
           hooks.onAsk?.(1, scan.asks);
@@ -378,6 +384,7 @@ async function viaPlaywright(url: string, caseId: string, report: BrowserReport,
     context = await browser.newContext({
       viewport: { width: 1280, height: 800 },
       acceptDownloads: false,
+      serviceWorkers: "block",
       userAgent:
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
     });
@@ -394,6 +401,16 @@ async function viaPlaywright(url: string, caseId: string, report: BrowserReport,
       return route.continue();
     });
     const page = await context.newPage();
+    // Playwright's route handlers are NOT called for redirect hops, so every request (including each
+    // redirect target) is also paused over CDP and held to the same rule before it leaves this machine.
+    const cdp = await context.newCDPSession(page);
+    await cdp.send("Fetch.enable", { patterns: [{ urlPattern: "*" }] });
+    cdp.on("Fetch.requestPaused", async (e) => {
+      const u = safeParse(e.request.url);
+      const ok = !u || (own && isOwnTrainingPage(`${u.protocol}//${u.host}/fake/`)) || (await resolvesPublic(u.hostname));
+      if (ok) await cdp.send("Fetch.continueRequest", { requestId: e.requestId }).catch(() => {});
+      else await cdp.send("Fetch.failRequest", { requestId: e.requestId, errorReason: "BlockedByClient" }).catch(() => {});
+    });
     const opened = context;
     hooks.cancel = async () => {
       await opened.close().catch(() => {});

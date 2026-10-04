@@ -49,7 +49,7 @@ const PRESSURE: Array<{ re: RegExp; tag: string }> = [
 const CATEGORY: Array<{ re: RegExp; cat: string }> = [
   { re: /(parcel|package|delivery|redeliver|shipment|courier|tracking)/i, cat: "parcel" },
   { re: /(toll|fastrak|e-?z ?pass|sunpass)/i, cat: "toll" },
-  { re: /\b(grandma|grandpa|it'?s me\b|bail\b|accident\b|in trouble|(my )?new (phone )?number|(hi|hey) (mom|mum|dad)\b)/i, cat: "family-emergency" },
+  { re: /\b(grandma|grandpa|it'?s me\b|bail\b|accident\b|in trouble|(my )?new (phone )?number|temporary number|(dropped|lost|broke) my phone|(hi|hey) (mom|mum|dad)\b)/i, cat: "family-emergency" },
   { re: /(geek squad|norton|mcafee|antivirus|subscription has been renewed|auto-?renew|tech(nical)? support|invoice #)/i, cat: "tech-support" },
   { re: /(medicare|social security|irs|tax refund|dmv|benefits|stimulus)/i, cat: "government" },
   { re: /(bank|account (has been|is) (suspended|locked|limited)|unusual sign-?in|verify your identity|wire|debit card)/i, cat: "bank" },
@@ -78,6 +78,7 @@ function stripForward(subject: string): string {
 /** Remove things that identify a person: emails, long numbers, tracking codes, names after "Dear". */
 export function sanitise(line: string): string {
   return line
+    .replace(/\b(?:(?:https?|hxxps?):\/\/|www\.)\S+|\b(?:[a-z0-9-]+\.)+[a-z]{2,}\/\S*/gi, "[link]")
     .replace(/\S+@\S+\.\S+/g, "•••")
     .replace(/\b(?:\+?\d[\d\s().-]{7,}\d)\b/g, "•••")
     .replace(/\b[A-Z]{1,4}-?\d{4,}[-A-Z0-9]*\b/g, "•••")
@@ -227,7 +228,8 @@ export async function readMessage(input: ReadInput): Promise<ReadResult> {
     .find((l) => l.length > 8 && !/^[-_=*]{3,}/.test(l) && !/^(from|to|date|sent|cc|reply-to):/i.test(l));
   const clip = (l: string) => (l.length > 72 ? `${l.slice(0, 72).replace(/\s+\S*$/, "")}…` : l);
   const rawSubject = stripForward(input.subject ?? "") || clip(stripForward(headerSubject ?? "") || firstLine || "") || "Something forwarded";
-  const subject = sanitise(model?.subject?.trim() || rawSubject) || "Something forwarded";
+  const cleaned = sanitise(model?.subject?.trim() || rawSubject);
+  const subject = cleaned && cleaned !== "[link]" ? cleaned : "Something forwarded";
 
   const phones = [...new Set((text.match(/\+?1?[\s.-]?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/g) ?? []).map((p) => p.replace(/\D/g, "")))];
   const modelPressure = Array.isArray(model?.pressure) ? model.pressure : [];

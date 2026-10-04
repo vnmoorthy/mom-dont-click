@@ -117,7 +117,8 @@ async function stepRead(ctx: Ctx): Promise<void> {
       c.subject = "A screenshot we could not read";
       c.evidence.push(ev("vision", "amber", "We could not read the words in this picture", "Reader", "Reading screenshots needs a vision model, and none is switched on. Paste the text or the link instead."));
     }
-    c.evidence.push(...languageEvidence(c, r.phones));
+    // a bare link is not a message: words in its path are not wording
+    if (!(input.url && !input.text)) c.evidence.push(...languageEvidence(c, r.phones));
   });
 
   // reading failed outright: never let "we saw nothing" pass for "nothing to see"

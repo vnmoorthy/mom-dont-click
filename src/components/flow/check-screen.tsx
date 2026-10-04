@@ -555,34 +555,36 @@ export function CheckScreen() {
               )}
             </div>
 
-            <div className="mt-5 border-t border-line pt-5">
-              <Field
-                label="Email me the verdict"
-                optional
-                error={notifyError}
-                hint="Only if you want a copy. You will see the answer on the next screen either way."
-              >
-                {({ id, describedBy, invalid }) => (
-                  <input
-                    id={id}
-                    type="email"
-                    inputMode="email"
-                    autoComplete="email"
-                    autoCapitalize="none"
-                    spellCheck={false}
-                    placeholder="you@example.com"
-                    value={notify}
-                    onChange={(e) => {
-                      setNotify(e.target.value);
-                      if (notifyError) setNotifyError(null);
-                    }}
-                    aria-invalid={invalid}
-                    aria-describedby={describedBy}
-                    className={cx(inputClass, invalid && "border-scam focus:border-scam focus:ring-scam/15")}
-                  />
-                )}
-              </Field>
-            </div>
+            {config?.capabilities.email && (
+              <div className="mt-5 border-t border-line pt-5">
+                <Field
+                  label="Email me the verdict"
+                  optional
+                  error={notifyError}
+                  hint="Only if you want a copy. You will see the answer on the next screen either way."
+                >
+                  {({ id, describedBy, invalid }) => (
+                    <input
+                      id={id}
+                      type="email"
+                      inputMode="email"
+                      autoComplete="email"
+                      autoCapitalize="none"
+                      spellCheck={false}
+                      placeholder="you@example.com"
+                      value={notify}
+                      onChange={(e) => {
+                        setNotify(e.target.value);
+                        if (notifyError) setNotifyError(null);
+                      }}
+                      aria-invalid={invalid}
+                      aria-describedby={describedBy}
+                      className={cx(inputClass, invalid && "border-scam focus:border-scam focus:ring-scam/15")}
+                    />
+                  )}
+                </Field>
+              </div>
+            )}
 
             <button type="submit" disabled={!!busy} className={cx(btnPrimary, "mt-6 h-16 w-full text-xl")}>
               {submitting ? (

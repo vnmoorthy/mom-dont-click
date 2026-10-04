@@ -9,7 +9,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  if (rateLimited(req, "guard", 10)) return fail("Too many sign-ups from here. Try again in a minute.", 429);
+  if (rateLimited(req, "guard", 60)) return fail("Too many sign-ups from here. Try again in a minute.", 429);
   const b = await body<{ guardianEmail?: string; parentName?: string; parentEmail?: string }>(req);
   if (!isEmail(b.guardianEmail)) return fail("Enter your email address");
   const parentEmail = b.parentEmail?.trim();

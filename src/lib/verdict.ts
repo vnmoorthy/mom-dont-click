@@ -30,7 +30,7 @@ export function languageEvidence(c: Pick<CaseRecord, "pressure" | "category" | "
   if (c.category === "family-emergency" && (asksForMoney || c.pressure.length > 0)) {
     out.push(ev("language", "red", "A 'relative in trouble' who needs money right now is the classic grandparent scam", "Reader", "Hang up and call your relative on the number you already have."));
   }
-  if (/\b(new (phone )?number|lost my phone|broke my phone|phone (is )?broken)\b/i.test(text) && asksForMoney) {
+  if (/\b(new (phone )?number|temporary number|(lost|broke|dropped) my phone|phone (is )?broken)\b/i.test(text) && asksForMoney) {
     out.push(ev("language", "red", "A 'new number' followed by a request for money is the 'Hi Mom' scam", "Reader", "Call the old number. It will still work."));
   }
   if (/(zelle|venmo|cash ?app|moneygram|western union|wire transfer)/i.test(text) && /\b(send|transfer|pay|move)\b/i.test(text) && !out.some((e) => /cannot be traced/.test(e.title))) {
@@ -38,7 +38,7 @@ export function languageEvidence(c: Pick<CaseRecord, "pressure" | "category" | "
   }
   // a surprise charge + a number to call: the refund scam, whatever brand it borrows and even if a real link is included
   const surpriseCharge = /(charged?|purchase|payment|order|refund|subscription|renew(ed|al)?|invoice|fraud(ulent)?|unauthori[sz]ed)/i.test(text);
-  if (phones.length && surpriseCharge && /\b(call|dial|contact|reach)\b/i.test(text) && (c.category === "tech-support" || c.category === "invoice" || /did(n'?t| not) (authori[sz]e|make|place)|if (this|it) was(n'?t| not) you|to (cancel|dispute|stop)/i.test(text))) {
+  if (phones.length && surpriseCharge && /\b(call|dial|contact|reach)\b/i.test(text) && (c.category === "tech-support" || c.category === "invoice" || /did(n'?t| not) (authori[sz]e|make|place|attempt|request)|was(n'?t| not) you|\bif no\b|unauthori[sz]ed|to (cancel|dispute|stop)|refund/i.test(text))) {
     out.push(ev("language", "red", "A surprise charge with a phone number to call is a refund scam", "Reader", "The 'cancellation desk' asks for remote access to your computer or your bank login."));
   }
   if (/@(gmail|outlook|hotmail|yahoo|aol)\.com/i.test(text) && /(billing|invoice|support|security|department|dept)/i.test(text) && c.category !== "family-emergency") {
@@ -164,7 +164,16 @@ function templateWording(level: VerdictLevel, c: CaseRecord, evidence: Evidence[
   const cat = c.category ?? "other";
   const hasLink = !!c.primaryUrl;
   if (level === "SCAM") {
-    return { headline: `SCAM. ${hasLink ? "Do not click." : "Do not reply."} ${RULE_LINE[cat] ?? RULE_LINE.other}`, reasons, advice: ADVICE[cat] ?? ADVICE.other };
+    // with no link in the message, the rule is about the phone number or the request itself
+    const NO_LINK: Record<string, string> = {
+      bank: "Call the number on your card, not the one in the message.",
+      "tech-support": RULE_LINE["tech-support"],
+      "family-emergency": RULE_LINE["family-emergency"],
+      invoice: RULE_LINE.invoice,
+      prize: RULE_LINE.prize,
+    };
+    const rule = hasLink ? (RULE_LINE[cat] ?? RULE_LINE.other) : (NO_LINK[cat] ?? "Do not call the number in the message.");
+    return { headline: `SCAM. ${hasLink ? "Do not click." : "Do not reply."} ${rule}`, reasons, advice: ADVICE[cat] ?? ADVICE.other };
   }
   if (level === "TREAT_AS_SCAM") {
     return {
@@ -174,9 +183,9 @@ function templateWording(level: VerdictLevel, c: CaseRecord, evidence: Evidence[
     };
   }
   return {
-    headline: officialUrl ? "No red flags found. To be sure, use the official site instead of the link." : "No red flags found. If it asks for money or a password later, stop and check again.",
+    headline: officialUrl && hasLink ? "No red flags found. To be sure, use the official site instead of the link." : "No red flags found. If it asks for money or a password later, stop and check again.",
     reasons: reasons.length ? reasons : ["Nothing in the message or the page looked like a known trick."],
-    advice: officialUrl
+    advice: officialUrl && hasLink
       ? `Rather than clicking, open ${officialUrl.replace(/^https?:\/\/(www\.)?/, "")} yourself and look for the same message there.`
       : "This is a second opinion, not a guarantee. If anything asks for money, a password or a code, stop.",
   };

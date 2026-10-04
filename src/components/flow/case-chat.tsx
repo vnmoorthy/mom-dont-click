@@ -78,8 +78,10 @@ export function CaseChat({
             { body: { question } },
           );
           answer = (res.answer ?? res.message?.text ?? "").trim();
-        } catch {
-          yield sorry("I could not reach the checker just now. Please ask again in a moment.");
+        } catch (err) {
+          // api() throws the server's own sentence (403/409/429); only a network failure means "could not reach"
+          const said = err instanceof Error && !(err instanceof TypeError) && !/^Request failed/.test(err.message) ? err.message : "";
+          yield sorry(said || "I could not reach the checker just now. Please ask again in a moment.");
           return;
         }
         if (!answer) {

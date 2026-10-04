@@ -12,8 +12,8 @@ Two versions: the 2-minute stage cut and the 10-minute table demo. Both run from
 1. Open **`/console`** on your laptop. Every row in the capability panel should be coloured, not amber. Amber rows still work, on a local fallback.
 2. Open **`/wall`** on the projector, press **F** for fullscreen.
 3. In the console press **Reset the wall**.
-4. Ask one judge to scan the QR code, tap **Guard**, and enter their email. Leave "their email address" empty, and ask them to keep that page open. They are now guarding the demo Mom: the heads-up lands on that page the moment it happens, and by email when email is on.
-5. Fire seed **1** once and reset again. This warms the browser so the first frame appears in about a second.
+4. Fire seed **1** once and reset again. This warms the browser so the first frame appears in about a second.
+5. Ask one judge to scan the QR code, tap **Guard**, and enter their email. Leave "their email address" empty, and ask them to keep that page open. They are now guarding the demo Mom: the heads-up lands on that page the moment it happens, and by email when email is on.
 
 Keys in the console: `1` parcel, `2` toll text, `3` bank alert, `4` tech-support invoice, `5` Medicare card, `6` grandchild, `7` a genuine order email.
 Keys on the wall: `F` fullscreen, `Space` dismiss the verdict, `G` grid only, `R` replay the last verdict.

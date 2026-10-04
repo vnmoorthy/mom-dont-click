@@ -146,9 +146,15 @@ export function GuardScreen() {
                     You are guarding {shownName}.
                   </h1>
                   <p className="mt-5 max-w-lg text-lg text-ink-2">
-                    We will write to{" "}
-                    <span className="font-mono text-base font-semibold text-ink">{guardian.guardianEmailMasked}</span>,
-                    and only when a scam turns up.{" "}
+                    {config && !config.capabilities.email ? (
+                      <>Email is switched off on this server, so the heads-up will land on this page while you keep it open.{" "}</>
+                    ) : (
+                      <>
+                        We will write to{" "}
+                        <span className="font-mono text-base font-semibold text-ink">{guardian.guardianEmailMasked}</span>,
+                        and only when a scam turns up.{" "}
+                      </>
+                    )}
                     {guardian.parentEmailMasked ? (
                       <>
                         We are watching for anything forwarded from{" "}

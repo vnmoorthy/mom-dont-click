@@ -124,7 +124,7 @@ export function CaseVerdict({ item, className }: { item: CaseRecord; className?:
             <div key={`${g.emailMasked}-${i}`} className="flex items-start gap-3">
               <BellRing size={20} className="mt-0.5 shrink-0 text-ink-3" aria-hidden />
               <p className="text-base text-ink-2 sm:text-lg">
-                <span className="font-semibold text-ink">We let {g.name || "their guardian"} know.</span>{" "}
+                <span className="font-semibold text-ink">We let {g.name ? `${g.name}’s guardian` : "their guardian"} know.</span>{" "}
                 <span className="font-mono text-sm text-ink-3">
                   {g.emailMasked} · {timeAgo(g.at, now)}
                 </span>

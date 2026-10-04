@@ -54,7 +54,7 @@ export function CaseView({ id }: { id: string }) {
 }
 
 function CaseViewInner({ id }: { id: string }) {
-  const { item: liveItem, messages, loading, notFound, frame, config, refresh } = useCase(id);
+  const { item: liveItem, messages, loading, notFound, frame, config, mine, refresh } = useCase(id);
   const item = useFreshest(id, liveItem);
   const preferLiveView = config?.preferLiveView ?? true;
   const finished = isFinished(item);
@@ -85,7 +85,7 @@ function CaseViewInner({ id }: { id: string }) {
   } else {
     key = "finished";
     // the chat is seeded from stored messages, so wait until they have loaded
-    const showChat = item.status === "done" && !loading;
+    const showChat = item.status === "done" && !loading && mine;
     body = (
       <div className="space-y-8 lg:space-y-10">
         {/* One column on a phone (verdict, browser, evidence, chat, message, trace);

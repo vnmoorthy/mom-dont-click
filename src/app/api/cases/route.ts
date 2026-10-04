@@ -32,7 +32,7 @@ interface CreateBody {
 
 export async function POST(req: Request) {
   boot();
-  if (rateLimited(req, "cases", 20)) return fail("That is a lot of checks at once. Give it a minute and try again.", 429);
+  if (rateLimited(req, "cases", 120)) return fail("That is a lot of checks at once. Give it a minute and try again.", 429);
   const b = await body<CreateBody>(req);
   const notifyEmail = isEmail(b.notifyEmail) ? b.notifyEmail.trim() : undefined;
 

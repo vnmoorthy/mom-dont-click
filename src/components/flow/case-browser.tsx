@@ -91,6 +91,7 @@ export function CaseBrowserSection({
   }
 
   const chain = hops(b, item.primaryUrl);
+  const alarm = chain.length > 1 && item.verdict !== "NO_RED_FLAGS";
   const openFor = b.startedAt && b.endedAt ? b.endedAt - b.startedAt : null;
   const t0 = b.startedAt ?? b.steps[0]?.at ?? 0;
   const asksFor = b.asksFor ?? [];
@@ -123,7 +124,7 @@ export function CaseBrowserSection({
 
         {chain.length > 0 && (
           <div className="p-4 sm:p-5">
-            <div className={eyebrowClass}>{chain.length > 1 ? "Where the link really went" : "Where the link went"}</div>
+            <div className={eyebrowClass}>{alarm ? "Where the link really went" : "Where the link went"}</div>
             <ol className="mt-3">
               {chain.map((u, i) => {
                 const last = i === chain.length - 1;
@@ -133,7 +134,7 @@ export function CaseBrowserSection({
                     <div
                       className={cx(
                         "rounded-xl border px-3 py-2",
-                        last && chain.length > 1 ? "border-scam/40 bg-scam-soft" : "border-line bg-paper",
+                        last && alarm ? "border-scam/40 bg-scam-soft" : "border-line bg-paper",
                       )}
                     >
                       <div className="font-mono text-[10px] uppercase tracking-widest text-ink-3">

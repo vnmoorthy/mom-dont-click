@@ -16,7 +16,8 @@ When the browser runs on the server itself (the local Chromium and plain-fetch t
 
 - the first address must resolve to a public IP (`assertPublicUrl` in `src/lib/urls.ts`);
 - every redirect hop is checked again in the fetch tier;
-- every request a page makes, including redirect targets, is resolved and aborted if it points at a private, loopback or link-local address;
+- every request a page makes is paused and resolved before it leaves the machine, and failed if it points at a private, loopback or link-local address. This is done twice: in Playwright's router, and over the DevTools protocol, because Playwright's router is not consulted for redirect hops;
+- service workers are blocked;
 - the fallback Chromium in the container does not run as root.
 
 With a Kernel key the browser runs in Kernel's cloud, outside the app's network entirely. That is the recommended setup for a public deployment.

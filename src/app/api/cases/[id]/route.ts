@@ -10,5 +10,5 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
   // verdict and evidence for anyone with the link; the original message and the conversation for the sender
   const mine = ownsCase(req, c);
   const messages = mine ? await listMessages(id) : [];
-  return json({ case: detailCase(c, mine), messages });
+  return json({ case: detailCase(c, mine), messages, mine });
 }

@@ -200,6 +200,8 @@ export function useCase(id: string): {
   notFound: boolean;
   frame: number;
   config: PublicConfig | null;
+  /** this browser sent the case in (or is the presenter): it may read the original and ask follow-ups */
+  mine: boolean;
   refresh: () => void;
 } {
   const live = useLive();
@@ -207,12 +209,14 @@ export function useCase(id: string): {
   const [messages, setMessages] = useState<CaseMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [mine, setMine] = useState(false);
 
   const refresh = useCallback(() => {
-    api<{ case: CaseRecord; messages: CaseMessage[] }>(`/api/cases/${id}`)
+    api<{ case: CaseRecord; messages: CaseMessage[]; mine?: boolean }>(`/api/cases/${id}`)
       .then((d) => {
         setInitial(d.case);
         setMessages(d.messages);
+        setMine(d.mine !== false);
         setNotFound(false);
       })
       .catch(() => setNotFound(true))
@@ -233,7 +237,7 @@ export function useCase(id: string): {
   // the stream carries no raw text (it feeds shared screens); keep the copy this page fetched
   const fresh = live.byId[id];
   const item = fresh ? { ...fresh, rawText: fresh.rawText || initial?.rawText || "" } : initial;
-  return { item, messages, loading, notFound, frame: live.frames[id] ?? 0, config: live.config, refresh };
+  return { item, messages, loading, notFound, frame: live.frames[id] ?? 0, config: live.config, mine, refresh };
 }
 
 /** Mask an address for public screens: "ja***@gmail.com" */

@@ -175,7 +175,7 @@ export function Wall() {
         return next.length > MAX_WAITING + 1 ? [next[0], ...next.slice(-MAX_WAITING)] : next;
       });
     }
-    if (alerts.length > 0) setToasts((t) => [...t, ...alerts].slice(-3));
+    if (alerts.length > 0) setToasts((t) => [...t, ...alerts.slice(0, 2)].slice(-2));
   }, [cases, config]);
 
   // 4. Notice cases that have stopped moving, so a stuck one cannot own the screen forever.

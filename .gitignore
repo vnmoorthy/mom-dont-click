@@ -58,3 +58,7 @@ tsconfig.tsbuildinfo
 
 # Office lock files
 ~$*
+
+# film: synthetic guide voice and final renders stay local
+/docs/video/demo-guide.mp4
+/docs/video/demo-final*.mp4

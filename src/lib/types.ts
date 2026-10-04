@@ -137,6 +137,8 @@ export interface PublicConfig {
   capabilities: Capabilities;
   /** Wall setting: prefer the Kernel live view iframe over the screenshot stream. */
   preferLiveView: boolean;
+  /** 1 = normal; higher slows the visible browser walk so a room can follow it */
+  stagePace: number;
   /** Persona used by seeded emails. */
   demoMom: { name: string; email: string };
 }

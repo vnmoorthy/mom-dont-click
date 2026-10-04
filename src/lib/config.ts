@@ -66,6 +66,8 @@ interface Runtime {
   mastraOk: boolean | null;
   warmBrowser: boolean;
   bootedAt: number;
+  /** stretch the visible browser walk so a room can follow it (1 = normal) */
+  stagePace: number;
 }
 const g = globalThis as unknown as { __mdcRuntime?: Runtime };
 export const runtime: Runtime = (g.__mdcRuntime ??= {
@@ -79,7 +81,9 @@ export const runtime: Runtime = (g.__mdcRuntime ??= {
   mastraOk: null,
   warmBrowser: false,
   bootedAt: Date.now(),
+  stagePace: Number(process.env.MDC_STAGE_PACE) || 1,
 });
+runtime.stagePace ??= Number(process.env.MDC_STAGE_PACE) || 1;
 
 export function llmProvider(): Capabilities["llm"] {
   if (env.neonGwBase && env.neonGwToken) return "neon-gateway";
@@ -118,6 +122,7 @@ export function publicConfig(): PublicConfig {
     publicUrl: env.publicUrl,
     capabilities: capabilities(),
     preferLiveView: runtime.preferLiveView,
+    stagePace: runtime.stagePace,
     demoMom: DEMO_MOM,
   };
 }

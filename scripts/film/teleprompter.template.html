@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Teleprompter · Mom, Don't Click</title>
+<style>
+  :root { --night:#0d0b09; --cream:#f6f0e4; --cream2:#cfc4b0; --cream3:#8f8473; --scam:#e8391c; }
+  @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --night:#0d0b09; } }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--night); color:var(--cream); font-family: ui-sans-serif, -apple-system, "Segoe UI", sans-serif; min-height:100vh; display:grid; grid-template-rows:auto 1fr auto; }
+  header { display:flex; align-items:center; gap:16px; padding:16px 24px; border-bottom:1px solid #241e19; flex-wrap:wrap; }
+  header b { font-size:18px; }
+  button { font:700 18px/1 inherit; padding:14px 24px; border-radius:999px; border:0; background:var(--scam); color:var(--cream); cursor:pointer; }
+  button.ghost { background:#241e19; color:var(--cream2); }
+  .clock { font:700 22px/1 ui-monospace, Menlo, monospace; color:var(--cream2); margin-left:auto; }
+  main { display:grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap:28px; padding:28px; align-items:start; }
+  video { width:100%; border-radius:16px; background:#000; }
+  .now { font-size:clamp(28px, 3.6vw, 52px); line-height:1.3; font-weight:700; min-height:5.4em; }
+  .now.wait { color:var(--cream3); }
+  .next { margin-top:28px; font-size:clamp(18px, 1.8vw, 26px); line-height:1.4; color:var(--cream3); }
+  .next span { display:block; font:700 13px/1 ui-monospace, Menlo, monospace; letter-spacing:.2em; margin-bottom:10px; }
+  .bar { height:6px; background:#241e19; border-radius:3px; overflow:hidden; margin-top:18px; }
+  .bar i { display:block; height:100%; width:0; background:var(--scam); }
+  footer { padding:14px 24px; color:var(--cream3); font-size:15px; border-top:1px solid #241e19; line-height:1.5; }
+  .count { position:fixed; inset:0; display:none; place-items:center; background:rgba(13,11,9,.92); font:800 30vh/1 -apple-system, sans-serif; color:var(--scam); }
+  @media (max-width: 760px) { main { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+  <header>
+    <b>Teleprompter</b>
+    <button id="go">Start</button>
+    <button id="stop" class="ghost">Stop</button>
+    <span class="clock" id="clock">0:00</span>
+  </header>
+  <main>
+    <div>
+      <video id="v" src="demo.mp4" muted playsinline preload="auto"></video>
+      <div class="bar"><i id="bar"></i></div>
+    </div>
+    <div>
+      <div class="now wait" id="now">Start your own recording first (QuickTime or Photo Booth, camera and microphone on). Then press Start. After a 3-2-1 and a beep, read each line as it appears.</div>
+      <div class="next"><span>NEXT</span><div id="next"></div></div>
+    </div>
+  </main>
+  <footer>The beep marks the start of the film, so your recording can be lined up with it automatically. Leave a second of silence before the beep. When it finishes, run <code>scripts/film/combine.sh path/to/your-recording</code>.</footer>
+  <div class="count" id="count"></div>
+<script>
+  const DATA = __CUES__;
+  const v = document.getElementById("v"), now = document.getElementById("now"), next = document.getElementById("next");
+  const clock = document.getElementById("clock"), bar = document.getElementById("bar"), count = document.getElementById("count");
+  const fmt = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
+  let raf = 0;
+  function beep() {
+    const ctx = new AudioContext();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.value = 1000; g.gain.value = 0.35;
+    o.connect(g).connect(ctx.destination); o.start(); o.stop(ctx.currentTime + 0.25);
+  }
+  function tick() {
+    const t = v.currentTime;
+    clock.textContent = `${fmt(t)} / ${fmt(DATA.duration)}`;
+    bar.style.width = `${(t / DATA.duration) * 100}%`;
+    let cur = null, upcoming = null;
+    for (const c of DATA.cues) {
+      if (t >= c.start - 0.4 && t < c.sceneEnd) cur = c;
+      if (!upcoming && c.start - 0.4 > t) upcoming = c;
+    }
+    now.classList.toggle("wait", !cur);
+    now.textContent = cur ? cur.line : "…";
+    next.textContent = upcoming ? `${upcoming.line}  (at ${fmt(upcoming.start)})` : "That’s the end. Stop your recording.";
+    if (!v.ended) raf = requestAnimationFrame(tick);
+  }
+  document.getElementById("go").onclick = async () => {
+    v.currentTime = 0;
+    count.style.display = "grid";
+    for (const n of [3, 2, 1]) { count.textContent = n; await new Promise((r) => setTimeout(r, 900)); }
+    count.style.display = "none";
+    beep();
+    await v.play();
+    cancelAnimationFrame(raf); tick();
+  };
+  document.getElementById("stop").onclick = () => { v.pause(); cancelAnimationFrame(raf); };
+  next.textContent = DATA.cues[0].line;
+</script>
+</body>
+</html>

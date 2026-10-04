@@ -36,8 +36,13 @@ const FAQ: Array<{ re: RegExp; scam: string; calm: string }> = [
   },
 ];
 
+const FAMILY_REAL = /(real|really|sure|my (son|daughter|grand\w*|kid|child)|it'?s (him|her)|what if it'?s)/i;
+
 function ruleAnswer(c: CaseRecord, question: string): string {
   const scam = c.verdict !== "NO_RED_FLAGS";
+  if (scam && c.category === "family-emergency" && FAMILY_REAL.test(question)) {
+    return "Check the safe way. Call them on the number you already have for them, or ask a question only they would know. If it really is them, they will understand. Never send money to a new number first.";
+  }
   const hit = FAQ.find((f) => f.re.test(question));
   if (hit) return scam ? hit.scam : hit.calm;
   const why = c.reasons.slice(0, 2).join(" ");

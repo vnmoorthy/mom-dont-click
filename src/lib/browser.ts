@@ -39,6 +39,8 @@ function within<T>(p: Promise<T>, ms: number, what: string): Promise<T> {
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/** pauses inside the visible walk, stretched by the presenter's stage pace */
+const beat = (ms: number) => sleep(ms * Math.min(4, Math.max(1, runtime.stagePace || 1)));
 const BUDGET_MS = 30_000;
 
 // ── concurrency: a couple of sessions at a time, the rest wait in line ───────
@@ -158,7 +160,7 @@ async function canaryFill(page: Page): Promise<void> {
     else if (meta.type === "password") v = "not-a-real-password";
     else if (/name|user/.test(meta.name)) v = "Canary Test";
     await f.scrollIntoViewIfNeeded().catch(() => {});
-    await f.pressSequentially(v, { delay: 28 }).catch(() => {});
+    await f.pressSequentially(v, { delay: 28 * Math.min(4, Math.max(1, runtime.stagePace || 1)) }).catch(() => {});
   }
 }
 
@@ -282,7 +284,7 @@ async function drive(
     const hops: string[] = [];
     for (let r = resp?.request().redirectedFrom(); r; r = r.redirectedFrom()) hops.unshift(r.url());
     report.redirectChain = [...new Set([...hops, ...chain, page.url()])];
-    await sleep(900);
+    await beat(900);
     report.finalUrl = page.url();
     report.title = (await page.title().catch(() => "")) || undefined;
     hooks.onReport(report);
@@ -302,16 +304,17 @@ async function drive(
       report.canaryWalk = true;
       const submit = page.locator("form button[type=submit]:visible").first();
       if (await submit.count()) {
+        await beat(400);
         step("Typing obviously fake details to see what happens next");
         await canaryFill(page);
-        await sleep(350);
+        await beat(350);
         const fieldNames = () =>
           page.evaluate(() => Array.from(document.querySelectorAll("form input"), (el) => (el as HTMLInputElement).name).join(",")).catch(() => "");
         const before = await fieldNames();
         // the boxes drawn for step 1 must not hang over step 2 while it loads
         await page.evaluate(() => document.getElementById("__mdc_layer")?.replaceChildren()).catch(() => {});
         const clicked = await submit.click({ timeout: 8000 }).then(() => true, () => false);
-        await sleep(1100);
+        await beat(1100);
         scan = await within(page.evaluate(scanPage), 6000, "the page was too busy to inspect");
         // only report a second step if the form really moved on
         if (clicked && scan.inputs > 0 && (await fieldNames()) !== before) {
@@ -319,17 +322,17 @@ async function drive(
           for (const a of scan.asks) if (!report.asksFor.includes(a)) report.asksFor.push(a);
           hooks.onAsk?.(1, scan.asks);
           step(scan.asks.length ? `Step 2 asks for: ${scan.asks.join(", ")}. Stopping here` : "Step 2 loaded");
-          await sleep(1800);
+          await beat(1800);
         }
       }
     } else {
       step("Scrolling through the page (looking, never typing)");
       for (let i = 0; i < 3; i++) {
         await page.mouse.wheel(0, 380).catch(() => {});
-        await sleep(380);
+        await beat(380);
       }
       await page.evaluate(() => window.scrollTo({ top: 0, behavior: "smooth" })).catch(() => {});
-      await sleep(500);
+      await beat(500);
       const again = await within(page.evaluate(scanPage), 5000, "inspect").catch(() => null);
       if (again) for (const a of again.asks) if (!report.asksFor.includes(a)) report.asksFor.push(a);
       if (again && asksByStep[0].length === 0) asksByStep[0] = again.asks;

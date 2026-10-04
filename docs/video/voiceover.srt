@@ -1,0 +1,55 @@
+1
+00:00:00,650 --> 00:00:05,670
+My mom texts me “is this real?” about once a week. Usually while I’m in a meeting.
+
+2
+00:00:06,380 --> 00:00:15,670
+Last year, Americans over sixty reported losing almost five billion dollars to fraud. And in every family, someone is the unpaid fraud desk.
+
+3
+00:00:16,380 --> 00:00:24,450
+So I built Mom, Don’t Click. It’s one email address. She forwards anything sketchy, and an agent clicks the link for her.
+
+4
+00:00:25,150 --> 00:00:29,320
+I sign up once, as her guardian. That’s the whole setup.
+
+5
+00:00:30,020 --> 00:00:44,910
+This morning she forwarded this: a parcel is being held, pay a dollar ninety-nine. She never opens it. A throwaway browser does, far away from her computer. It types obviously fake details, and watches what the page asks for next.
+
+6
+00:00:46,410 --> 00:00:53,410
+Step two wants her card number. So the answer is one sentence she can act on. Scam. Do not click.
+
+7
+00:00:54,110 --> 00:01:00,390
+And I get exactly one note. “Mom was sent a parcel scam. She did not click. Handled.”
+
+8
+00:01:01,090 --> 00:01:05,690
+When the same scam comes back, it’s answered from memory. Instantly.
+
+9
+00:01:06,390 --> 00:01:15,930
+Anyone can try it from their phone. Here’s the classic: “Hi Mom, new number, send money by Zelle.” There’s no link at all, and it still catches it.
+
+10
+00:01:16,630 --> 00:01:25,180
+And it isn’t paranoid. A real order email gets “no red flags found,” and a nudge to use the official site. It never calls anything safe.
+
+11
+00:01:28,430 --> 00:01:35,940
+Every answer comes with a follow-up chat, in plain words. Could it still be real? Call them on the number you already have.
+
+12
+00:01:36,650 --> 00:01:49,840
+Under the hood, it’s one Mastra workflow. Read the message, check memory, then open the link, check the claims and check the address, all in parallel. Rules decide the verdict. The model only writes the sentence.
+
+13
+00:01:50,560 --> 00:02:01,580
+Kernel is the throwaway browser. Exa checks the claims. AgentMail is the inbox. Neon is the memory. And without the keys, every piece falls back, and it still works.
+
+14
+00:02:02,280 --> 00:02:06,890
+Mom forwards. It clicks. You only hear about it when it matters.

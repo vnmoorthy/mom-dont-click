@@ -55,6 +55,8 @@ The answer always uses a fixed vocabulary:
 
 It never calls a message "safe" or "real". Rules decide the level; the language model only chooses the words, and it is not allowed to soften them.
 
+<p align="center"><b><a href="docs/video/demo.mp4">Watch the 2-minute product film</a></b> (the real app, recorded end to end by <code>scripts/film/record.mjs</code>)</p>
+
 <p align="center">
   <img src="docs/media/wall-demo.gif" alt="The wall: a forwarded email arrives, a throwaway browser walks into the page, the card fields are boxed in red, and the screen floods with a SCAM verdict" width="100%">
 </p>

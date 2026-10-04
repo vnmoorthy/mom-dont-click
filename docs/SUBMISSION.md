@@ -17,7 +17,8 @@ One email address your mom forwards anything sketchy to. An agent clicks the lin
 - Repository: https://github.com/vnmoorthy/mom-dont-click
 - Live: _add the deployed URL_
 - Deck: https://github.com/vnmoorthy/mom-dont-click/blob/main/docs/deck/mom-dont-click.pptx
-- 30-second recording: https://github.com/vnmoorthy/mom-dont-click/blob/main/docs/media/wall-demo.mp4
+- Product film (2 min): https://github.com/vnmoorthy/mom-dont-click/blob/main/docs/video/demo.mp4
+- 30-second wall recording: https://github.com/vnmoorthy/mom-dont-click/blob/main/docs/media/wall-demo.mp4
 
 ## What it does (short)
 

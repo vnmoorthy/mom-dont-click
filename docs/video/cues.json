@@ -1,0 +1,103 @@
+{
+  "duration": 129.66,
+  "cues": [
+    {
+      "id": "open",
+      "start": 0.65,
+      "end": 5.67,
+      "sceneEnd": 6.03,
+      "line": "My mom texts me “is this real?” about once a week. Usually while I’m in a meeting."
+    },
+    {
+      "id": "problem",
+      "start": 6.38,
+      "end": 15.67,
+      "sceneEnd": 16.03,
+      "line": "Last year, Americans over sixty reported losing almost five billion dollars to fraud. And in every family, someone is the unpaid fraud desk."
+    },
+    {
+      "id": "idea",
+      "start": 16.38,
+      "end": 24.45,
+      "sceneEnd": 24.8,
+      "line": "So I built Mom, Don’t Click. It’s one email address. She forwards anything sketchy, and an agent clicks the link for her."
+    },
+    {
+      "id": "guard",
+      "start": 25.15,
+      "end": 29.32,
+      "sceneEnd": 29.67,
+      "line": "I sign up once, as her guardian. That’s the whole setup."
+    },
+    {
+      "id": "walk",
+      "start": 30.02,
+      "end": 44.91,
+      "sceneEnd": 46.06,
+      "line": "This morning she forwarded this: a parcel is being held, pay a dollar ninety-nine. She never opens it. A throwaway browser does, far away from her computer. It types obviously fake details, and watches what the page asks for next."
+    },
+    {
+      "id": "verdict",
+      "start": 46.41,
+      "end": 53.41,
+      "sceneEnd": 53.76,
+      "line": "Step two wants her card number. So the answer is one sentence she can act on. Scam. Do not click."
+    },
+    {
+      "id": "note",
+      "start": 54.11,
+      "end": 60.39,
+      "sceneEnd": 60.74,
+      "line": "And I get exactly one note. “Mom was sent a parcel scam. She did not click. Handled.”"
+    },
+    {
+      "id": "again",
+      "start": 61.09,
+      "end": 65.69,
+      "sceneEnd": 66.04,
+      "line": "When the same scam comes back, it’s answered from memory. Instantly."
+    },
+    {
+      "id": "paste",
+      "start": 66.39,
+      "end": 75.93,
+      "sceneEnd": 76.28,
+      "line": "Anyone can try it from their phone. Here’s the classic: “Hi Mom, new number, send money by Zelle.” There’s no link at all, and it still catches it."
+    },
+    {
+      "id": "genuine",
+      "start": 76.63,
+      "end": 85.18,
+      "sceneEnd": 88.08,
+      "line": "And it isn’t paranoid. A real order email gets “no red flags found,” and a nudge to use the official site. It never calls anything safe."
+    },
+    {
+      "id": "chat",
+      "start": 88.43,
+      "end": 95.94,
+      "sceneEnd": 96.3,
+      "line": "Every answer comes with a follow-up chat, in plain words. Could it still be real? Call them on the number you already have."
+    },
+    {
+      "id": "hood",
+      "start": 96.65,
+      "end": 109.84,
+      "sceneEnd": 110.21,
+      "line": "Under the hood, it’s one Mastra workflow. Read the message, check memory, then open the link, check the claims and check the address, all in parallel. Rules decide the verdict. The model only writes the sentence."
+    },
+    {
+      "id": "stack",
+      "start": 110.56,
+      "end": 121.58,
+      "sceneEnd": 121.93,
+      "line": "Kernel is the throwaway browser. Exa checks the claims. AgentMail is the inbox. Neon is the memory. And without the keys, every piece falls back, and it still works."
+    },
+    {
+      "id": "close",
+      "start": 122.28,
+      "end": 126.89,
+      "sceneEnd": 129.66,
+      "line": "Mom forwards. It clicks. You only hear about it when it matters."
+    }
+  ]
+}

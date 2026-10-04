@@ -1,0 +1,146 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Mom, Don't Click · film stage</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root { --night:#0d0b09; --night2:#171310; --night3:#241e19; --cream:#f6f0e4; --cream2:#cfc4b0; --cream3:#8f8473; --scam:#e8391c; --warn:#f2a417; --calm:#5d7186; --ink:#17130f; --ease:cubic-bezier(.16,1,.3,1); }
+  * { box-sizing:border-box; margin:0; }
+  html, body { width:1920px; height:1080px; overflow:hidden; background:var(--night); color:var(--cream); font-family:'Instrument Sans',sans-serif; -webkit-font-smoothing:antialiased; }
+  body { background-image: radial-gradient(1200px 600px at 82% -10%, rgba(232,57,28,.16), transparent 60%), radial-gradient(900px 500px at 0% 110%, rgba(242,164,23,.07), transparent 60%), radial-gradient(rgba(246,240,228,.04) 1px, transparent 1px); background-size:auto,auto,24px 24px; }
+
+  .box { position:absolute; left:0; top:0; transform-origin:0 0; transition: transform 1000ms var(--ease), opacity 700ms var(--ease); will-change: transform, opacity; }
+  iframe { border:0; display:block; background:#0d0b09; }
+
+  #wallBox { width:1920px; height:1080px; overflow:hidden; border-radius:0; transition: transform 1000ms var(--ease), opacity 700ms var(--ease), border-radius 1000ms var(--ease); }
+  #wallBox iframe { width:1920px; height:1080px; }
+
+  #phoneBox { width:420px; height:890px; padding:15px 15px; border-radius:58px; background:#17130f; box-shadow: 0 0 0 2px rgba(246,240,228,.18), 0 50px 120px rgba(0,0,0,.65); }
+  #phoneBox .screen { width:390px; height:860px; border-radius:44px; overflow:hidden; position:relative; background:#f6f0e4; }
+  #phoneBox iframe { width:390px; height:860px; }
+  #phoneBox .notch { position:absolute; left:50%; top:10px; width:118px; height:32px; transform:translateX(-50%); background:#0d0b09; border-radius:20px; z-index:3; }
+
+  #deskBox { width:1600px; height:948px; border-radius:22px; overflow:hidden; background:#f6f0e4; box-shadow: 0 0 0 1px rgba(246,240,228,.18), 0 50px 120px rgba(0,0,0,.6); }
+  #deskBox .chrome { height:48px; display:flex; align-items:center; gap:14px; padding:0 18px; background:#ede5d4; border-bottom:1px solid #d6cab3; }
+  #deskBox .chrome i { width:13px; height:13px; border-radius:50%; display:inline-block; margin-right:6px; }
+  #deskBox .addr { flex:1; height:30px; border-radius:15px; background:#fff; border:1px solid #d6cab3; font:500 15px/30px 'JetBrains Mono'; color:#62574a; padding:0 16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #deskBox iframe { width:1600px; height:900px; }
+
+  #imgBox { width:1480px; height:900px; border-radius:22px; overflow:hidden; box-shadow: 0 50px 120px rgba(0,0,0,.6); }
+  #imgBox img { width:1480px; height:900px; display:block; }
+
+  .card { position:absolute; inset:0; padding:110px 130px; opacity:0; transition: opacity 800ms var(--ease), transform 1000ms var(--ease); transform: translateY(18px); pointer-events:none; }
+  .card.on { opacity:1; transform:none; }
+  .brand { display:flex; align-items:center; gap:16px; font:800 30px/1 'Bricolage Grotesque'; letter-spacing:-.02em; }
+  .brand svg { width:52px; height:52px; }
+  .mono { font:700 18px/1 'JetBrains Mono'; letter-spacing:.24em; text-transform:uppercase; color:var(--cream3); }
+  .huge { font:800 200px/.88 'Bricolage Grotesque'; letter-spacing:-.055em; font-variation-settings:'wdth' 86; }
+  .big { font:800 104px/.95 'Bricolage Grotesque'; letter-spacing:-.045em; font-variation-settings:'wdth' 88; }
+  .red { color:var(--scam); }
+  .sub { font:500 40px/1.35 'Instrument Sans'; color:var(--cream2); max-width:1300px; }
+
+  #t1 .huge { margin-top:150px; }
+  #t1 .big { margin-top:34px; }
+  #t2 { display:grid; grid-template-columns: 1fr 1fr; gap:110px; align-items:center; }
+  .bubble { font:500 46px/1.3 'Instrument Sans'; background:#2a221c; color:var(--cream); padding:30px 38px; border-radius:36px 36px 36px 10px; max-width:720px; }
+  .bubble.me { background:var(--cream); color:var(--ink); border-radius:36px 36px 10px 36px; margin-left:auto; font-weight:700; }
+  .who { font:700 18px/1 'JetBrains Mono'; letter-spacing:.2em; color:var(--cream3); margin:0 0 14px 6px; }
+  .later { font:700 18px/1 'JetBrains Mono'; letter-spacing:.3em; color:var(--cream3); text-align:center; margin:44px 0; }
+  .stat { font:800 230px/.9 'Bricolage Grotesque'; letter-spacing:-.05em; color:var(--scam); font-variation-settings:'wdth' 84; }
+  .statlabel { font:500 40px/1.3 'Instrument Sans'; color:var(--cream2); margin-top:26px; }
+  .source { font:500 18px/1 'JetBrains Mono'; color:var(--cream3); margin-top:34px; letter-spacing:.06em; }
+  #tEnd .line { font:800 150px/.98 'Bricolage Grotesque'; letter-spacing:-.05em; font-variation-settings:'wdth' 86; opacity:0; transform:translateY(24px); transition: opacity 700ms var(--ease), transform 900ms var(--ease); }
+  #tEnd .line.on { opacity:1; transform:none; }
+  #tEnd .gh { position:absolute; left:130px; bottom:110px; font:700 30px/1 'JetBrains Mono'; color:var(--cream2); letter-spacing:.02em; }
+
+  /* lower-third caption */
+  #cap { position:absolute; left:60px; bottom:44px; display:flex; align-items:center; gap:16px; padding:16px 26px 16px 18px; border-radius:999px; background:rgba(13,11,9,.88); border:1px solid rgba(246,240,228,.16); opacity:0; transform:translateY(16px); transition: opacity 600ms var(--ease), transform 700ms var(--ease); }
+  #cap.on { opacity:1; transform:none; }
+  #cap b { font:800 18px/1 'JetBrains Mono'; color:var(--night); background:var(--scam); border-radius:999px; padding:9px 13px; letter-spacing:.06em; }
+  #cap span { font:700 24px/1 'JetBrains Mono'; letter-spacing:.18em; text-transform:uppercase; color:var(--cream); }
+
+  /* side headline used next to the big phone */
+  #side, #cap { pointer-events:none; }
+  #side { position:absolute; left:130px; top:250px; width:880px; opacity:0; transition: opacity 700ms var(--ease), transform 900ms var(--ease); transform:translateY(16px); }
+  #side.on { opacity:1; transform:none; }
+  #side .k { font:700 20px/1 'JetBrains Mono'; letter-spacing:.24em; color:var(--scam); text-transform:uppercase; }
+  #side h2 { font:800 96px/.98 'Bricolage Grotesque'; letter-spacing:-.045em; margin-top:26px; font-variation-settings:'wdth' 88; }
+  #side p { font:500 36px/1.4 'Instrument Sans'; color:var(--cream2); margin-top:30px; }
+
+  #fade { position:absolute; inset:0; background:var(--night); opacity:1; transition: opacity 700ms ease; pointer-events:none; z-index:50; }
+</style>
+</head>
+<body>
+  <div id="wallBox" class="box" style="opacity:0"><iframe id="wall" title="wall"></iframe></div>
+  <div id="deskBox" class="box" style="opacity:0"><div class="chrome"><span><i style="background:#e8391c"></i><i style="background:#f2a417"></i><i style="background:#cfc4b0"></i></span><div class="addr" id="deskAddr"></div></div><iframe id="desk" title="desktop"></iframe></div>
+  <div id="imgBox" class="box" style="opacity:0"><img id="img" alt=""></div>
+  <div id="phoneBox" class="box" style="opacity:0"><div class="screen"><div class="notch"></div><iframe id="phone" title="phone"></iframe></div></div>
+
+  <div id="t1" class="card">
+    <div class="brand"><svg viewBox="0 0 64 64"><rect x="2" y="2" width="60" height="60" rx="17" fill="#e8391c"/><path d="M21 14.5v31.2c0 1.3 1.6 2 2.5 1l7.4-8 5.3 11.6c.4.9 1.4 1.3 2.3.9l3.4-1.6c.9-.4 1.3-1.4.9-2.3L37.5 36h10.3c1.3 0 2-1.6 1-2.5L23.5 13.4c-.9-.9-2.5-.2-2.5 1.1Z" fill="#f6f0e4"/><path d="M11 53 53 11" stroke="#17130f" stroke-width="7" stroke-linecap="round"/></svg>Mom, Don&rsquo;t Click</div>
+    <div class="huge">Mom, don&rsquo;t click.</div>
+    <div class="big red">We&rsquo;ll click it for you.</div>
+  </div>
+
+  <div id="t2" class="card">
+    <div>
+      <div class="who">MOM · 10:42 AM</div>
+      <div class="bubble">is this real?? it says my account is suspended</div>
+      <div class="later">THREE HOURS LATER</div>
+      <div class="bubble me">sorry, was in meetings. DON&rsquo;T CLICK</div>
+    </div>
+    <div>
+      <div class="stat">$4.88B</div>
+      <div class="statlabel">reported lost to fraud by Americans over 60 in 2024</div>
+      <div class="source">SOURCE: FBI INTERNET CRIME REPORT 2024</div>
+    </div>
+  </div>
+
+  <div id="tEnd" class="card">
+    <div class="brand"><svg viewBox="0 0 64 64"><rect x="2" y="2" width="60" height="60" rx="17" fill="#e8391c"/><path d="M21 14.5v31.2c0 1.3 1.6 2 2.5 1l7.4-8 5.3 11.6c.4.9 1.4 1.3 2.3.9l3.4-1.6c.9-.4 1.3-1.4.9-2.3L37.5 36h10.3c1.3 0 2-1.6 1-2.5L23.5 13.4c-.9-.9-2.5-.2-2.5 1.1Z" fill="#f6f0e4"/><path d="M11 53 53 11" stroke="#17130f" stroke-width="7" stroke-linecap="round"/></svg>Mom, Don&rsquo;t Click</div>
+    <div style="margin-top:120px">
+      <div class="line" id="l1">Mom forwards.</div>
+      <div class="line" id="l2">It clicks.</div>
+      <div class="line red" id="l3" style="font-size:112px;margin-top:18px">You only hear about it<br>when it matters.</div>
+    </div>
+    <div class="gh">github.com/vnmoorthy/mom-dont-click</div>
+  </div>
+
+  <div id="side"><div class="k" id="sideK"></div><h2 id="sideH"></h2><p id="sideP"></p></div>
+  <div id="cap"><b id="capN">01</b><span id="capT"></span></div>
+  <div id="fade"></div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const boxes = { wall: $("wallBox"), phone: $("phoneBox"), desk: $("deskBox"), img: $("imgBox") };
+  function place(el, x, y, s, opacity = 1) { el.style.transform = `translate(${x}px, ${y}px) scale(${s})`; el.style.opacity = opacity; }
+  const LAYOUTS = {
+    // everything hidden: a title card is showing
+    title: () => { place(boxes.wall, 120, 60, 0.88, 0); place(boxes.phone, 2000, 95, 1, 0); place(boxes.desk, 160, 1100, 0.94, 0); place(boxes.img, 220, 1100, 0.95, 0); },
+    // the wall, full bleed
+    wall: () => { boxes.wall.style.borderRadius = "0px"; place(boxes.wall, 0, 0, 1); place(boxes.phone, 2000, 95, 0.86, 0); place(boxes.desk, 160, 1100, 0.94, 0); place(boxes.img, 220, 1100, 0.95, 0); },
+    // wall on the left, phone on the right (bottom-right corner kept free for a picture-in-picture)
+    split: () => { boxes.wall.style.borderRadius = "26px"; place(boxes.wall, 56, 150, 0.71); place(boxes.phone, 1474, 40, 0.86); place(boxes.desk, 160, 1100, 0.94, 0); place(boxes.img, 220, 1100, 0.95, 0); },
+    // a big phone with a headline beside it
+    phone: () => { place(boxes.wall, 120, 60, 0.88, 0); place(boxes.phone, 1240, 70, 1.02); place(boxes.desk, 160, 1100, 0.94, 0); place(boxes.img, 220, 1100, 0.95, 0); },
+    // a desktop browser window
+    desk: () => { place(boxes.wall, 120, 60, 0.88, 0); place(boxes.phone, 2000, 95, 0.86, 0); place(boxes.desk, 112, 52, 0.94); place(boxes.img, 220, 1100, 0.95, 0); },
+    // a still image (the architecture diagram)
+    img: () => { place(boxes.wall, 120, 60, 0.88, 0); place(boxes.phone, 2000, 95, 0.86, 0); place(boxes.desk, 160, 1100, 0.94, 0); place(boxes.img, 112, 92, 0.95); },
+  };
+  window.stage = {
+    layout(name) { LAYOUTS[name](); },
+    card(id) { for (const c of document.querySelectorAll(".card")) c.classList.toggle("on", c.id === id); },
+    caption(n, text) { const cap = $("cap"); if (!text) { cap.classList.remove("on"); return; } $("capN").textContent = n; $("capT").textContent = text; cap.classList.add("on"); },
+    side(k, h, p) { const s = $("side"); if (!h) { s.classList.remove("on"); return; } $("sideK").textContent = k; $("sideH").innerHTML = h; $("sideP").textContent = p || ""; s.classList.add("on"); },
+    src(which, url) { const f = $(which); if (f.getAttribute("src") !== url) f.setAttribute("src", url); if (which === "desk") $("deskAddr").textContent = url.replace(/^https?:\/\//, ""); },
+    img(url) { $("img").src = url; },
+    endLine(i) { $("l" + i).classList.add("on"); },
+    fadeIn() { $("fade").style.opacity = 0; },
+    fadeOut() { $("fade").style.opacity = 1; },
+  };
+  LAYOUTS.title();
+</script>
+</body>
+</html>

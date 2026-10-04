@@ -593,6 +593,19 @@ function StageControls({
     }
   };
 
+  const [pacePending, setPacePending] = useState<number | null>(null);
+  const setPace = async (next: number) => {
+    setPacePending(next);
+    try {
+      const r = await guarded<{ config: PublicConfig }>("/api/console/settings", { body: { stagePace: next } });
+      if (r.config) onConfig(r.config);
+    } catch (e) {
+      setPreferError(messageOf(e, "Could not change that setting. Try again."));
+    } finally {
+      setPacePending(null);
+    }
+  };
+
   const setPrefer = async (next: boolean) => {
     setPreferPending(next);
     setPreferError(null);
@@ -646,6 +659,13 @@ function StageControls({
           {preferError}
         </p>
       )}
+      <Switch
+        checked={(pacePending ?? config?.stagePace ?? 1) > 1}
+        onChange={(on: boolean) => setPace(on ? 2.2 : 1)}
+        disabled={!config || pacePending !== null}
+        label="Stage pace"
+        hint="Slows the browser walk down so the room can follow each step. Verdicts are unchanged."
+      />
 
       <div className="border-t border-line pt-4">
         {reset === "confirm" ? (

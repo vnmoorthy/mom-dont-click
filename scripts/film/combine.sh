@@ -27,10 +27,10 @@ FILM="docs/video/demo.mp4"
 DUR="$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$FILM")"
 
 if [ -z "$OFFSET" ]; then
-  # the teleprompter plays a 0.25 s, 1 kHz beep the instant the film starts: find where it ends
+  # the teleprompter plays a 0.25 s, 1 kHz beep the instant the film starts: find where the beep begins
   END="$(ffmpeg -hide_banner -nostats -i "$IN" -t 60 -af "highpass=f=900,lowpass=f=1100,silencedetect=n=-32dB:d=0.12" -f null - 2>&1 \
         | awk '/silence_end/ {print $5; exit}')"
-  if [ -n "$END" ]; then OFFSET="$(python3 -c "print(max(0.0, $END - 0.25))")"; echo "Found the beep: the film starts ${OFFSET}s into your recording"
+  if [ -n "$END" ]; then OFFSET="$(python3 -c "print(round(max(0.0, $END), 3))")"; echo "Found the beep: the film starts ${OFFSET}s into your recording"
   else OFFSET=0; echo "No beep found; assuming your recording starts with the film (use --offset to adjust)"; fi
 fi
 # skip the beep itself

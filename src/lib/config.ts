@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { timingSafeEqual } from "node:crypto";
 import type { BrowserTier, Capabilities, PublicConfig } from "./types";
 
 const e = (k: string) => (process.env[k] ?? "").trim();
@@ -121,10 +122,21 @@ export function publicConfig(): PublicConfig {
   };
 }
 
-/** Console endpoints are open unless CONSOLE_KEY is set. */
+const LOOPBACK = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i;
+
+/**
+ * Presenter-only endpoints. With CONSOLE_KEY set, the key is required. Without it they
+ * are open only when the request was addressed to this machine (development); a public
+ * deployment that forgot the key is closed, not open.
+ */
 export function consoleAllowed(req: Request): boolean {
   const key = env.consoleKey;
-  if (!key) return true;
+  if (!key) {
+    const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
+    return LOOPBACK.test(host) && !req.headers.get("fly-client-ip");
+  }
   const got = req.headers.get("x-console-key") || new URL(req.url).searchParams.get("key") || "";
-  return got === key;
+  const a = Buffer.from(got);
+  const b = Buffer.from(key);
+  return a.length === b.length && timingSafeEqual(a, b);
 }

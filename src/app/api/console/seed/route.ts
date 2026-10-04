@@ -28,6 +28,7 @@ export async function POST(req: Request) {
     senderEmail: DEMO_MOM.email,
     senderName: DEMO_MOM.name,
     demoMom: true,
+    priority: true,
   });
   return json({ id: c.id });
 }

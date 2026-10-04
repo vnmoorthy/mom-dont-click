@@ -14,14 +14,24 @@ interface Mem {
 const g = globalThis as unknown as { __mdcMem?: Mem };
 const mem: Mem = (g.__mdcMem ??= { cases: new Map(), writes: new Map() });
 
-/** What leaves the server on shared screens: no raw text, masked sender. */
+/** What leaves the server on shared screens: no raw text, masked sender, no secrets. */
 export function publicCase(c: CaseRecord): CaseRecord {
-  return { ...c, rawText: "", senderEmail: c.senderEmail ? maskEmail(c.senderEmail) : undefined };
+  return { ...c, rawText: "", viewToken: undefined, senderEmail: c.senderEmail ? maskEmail(c.senderEmail) : undefined };
 }
 
-/** The case page gets the text that was sent in, but still a masked sender. */
-export function detailCase(c: CaseRecord): CaseRecord {
-  return { ...c, senderEmail: c.senderEmail ? maskEmail(c.senderEmail) : undefined };
+export const PRIVATE_NOTE = "Only the person who sent this in can read the original message.";
+
+/**
+ * The case page. The verdict and evidence are for anyone with the link; the forwarded
+ * text is only for whoever sent it in (`mine`), because case ids appear on shared screens.
+ */
+export function detailCase(c: CaseRecord, mine: boolean): CaseRecord {
+  return {
+    ...c,
+    rawText: mine ? c.rawText : PRIVATE_NOTE,
+    viewToken: undefined,
+    senderEmail: c.senderEmail ? maskEmail(c.senderEmail) : undefined,
+  };
 }
 
 function persist(c: CaseRecord, fp?: string | null): void {
@@ -34,7 +44,7 @@ function persist(c: CaseRecord, fp?: string | null): void {
         `insert into mdc_cases (id, created_at, domain, brand, verdict, thread_id, sender, fp, data)
          values ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb)
          on conflict (id) do update set domain=excluded.domain, brand=excluded.brand, verdict=excluded.verdict,
-           thread_id=excluded.thread_id, sender=excluded.sender, fp=coalesce(excluded.fp, mdc_cases.fp), data=excluded.data`,
+           thread_id=excluded.thread_id, sender=excluded.sender, fp=excluded.fp, data=excluded.data`,
         [c.id, c.createdAt, c.domain ?? null, c.claimedBrand ?? null, c.verdict ?? null, c.mail?.threadId ?? null,
           c.senderEmail ?? null, fp ?? null, snapshot],
       ),
@@ -113,7 +123,8 @@ export async function addMessage(m: Omit<CaseMessage, "id" | "at"> & { at?: numb
   await q(`insert into mdc_messages (id, case_id, at, data) values ($1,$2,$3,$4::jsonb)`, [
     msg.id, msg.caseId, msg.at, JSON.stringify(msg),
   ]);
-  emit({ type: "message", message: msg });
+  // the shared stream only says that something was added; the page that may read it fetches it
+  emit({ type: "message", message: { ...msg, text: "" } });
   return msg;
 }
 

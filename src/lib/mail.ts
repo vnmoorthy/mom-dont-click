@@ -145,7 +145,26 @@ export async function loadBody(m: InboundMail): Promise<InboundMail> {
   return m;
 }
 
-export async function reply(inboxId: string, messageId: string, body: { text: string; html: string }): Promise<void> {
+// Outbound limits, so a public form cannot be used to mail strangers at volume.
+const HOUR = 3600_000;
+const sentLog: { all: number[]; per: Map<string, number[]> } = ((globalThis as unknown as { __mdcSent?: { all: number[]; per: Map<string, number[]> } }).__mdcSent ??= { all: [], per: new Map() });
+const LIMITS = { perHour: 150, perRecipientPerHour: 5, perThreadPerHour: 12 };
+
+function allow(key: string, max: number): boolean {
+  const now = Date.now();
+  sentLog.all = sentLog.all.filter((t) => now - t < HOUR);
+  if (sentLog.all.length >= LIMITS.perHour) return false;
+  const mine = (sentLog.per.get(key) ?? []).filter((t) => now - t < HOUR);
+  if (mine.length >= max) return false;
+  mine.push(now);
+  sentLog.per.set(key, mine);
+  sentLog.all.push(now);
+  if (sentLog.per.size > 5000) sentLog.per.clear();
+  return true;
+}
+
+export async function reply(inboxId: string, messageId: string, body: { text: string; html: string }, threadId?: string): Promise<void> {
+  if (!allow(`thread:${threadId ?? messageId}`, LIMITS.perThreadPerHour)) throw new Error("Email limit reached for this conversation");
   const c = await client();
   await c.inboxes.messages.reply(inboxId, messageId, body);
 }
@@ -153,6 +172,7 @@ export async function reply(inboxId: string, messageId: string, body: { text: st
 export async function send(to: string, subject: string, body: { text: string; html: string }, fromInboxId?: string): Promise<void> {
   const inbox = await ensureInbox();
   if (!inbox) throw new Error("Email is not configured");
+  if (!allow(`to:${to.toLowerCase()}`, LIMITS.perRecipientPerHour)) throw new Error("Email limit reached for this address");
   const c = await client();
   await c.inboxes.messages.send(fromInboxId ?? inbox.inboxId, { to: [to], subject, ...body });
 }
@@ -173,7 +193,8 @@ function shell(inner: string): string {
 export function verdictEmail(c: CaseRecord): { subject: string; text: string; html: string } {
   const level = c.verdict ?? "TREAT_AS_SCAM";
   const label = VERDICT_LABEL[level];
-  const caseUrl = `${env.publicUrl}/case/${c.id}`;
+  // the sender's own link carries the token that unlocks their forwarded text
+  const caseUrl = c.viewToken ? `${env.publicUrl}/c/${c.id}?t=${c.viewToken}` : `${env.publicUrl}/case/${c.id}`;
   const reasons = c.reasons.slice(0, 3);
   const text = [
     c.headline ?? label,
@@ -228,7 +249,7 @@ export function guardianEmail(c: CaseRecord, parentName: string): { subject: str
 }
 
 export function answerEmail(answer: string, c: CaseRecord): { text: string; html: string } {
-  const caseUrl = `${env.publicUrl}/case/${c.id}`;
+  const caseUrl = c.viewToken ? `${env.publicUrl}/c/${c.id}?t=${c.viewToken}` : `${env.publicUrl}/case/${c.id}`;
   return {
     text: `${answer}\n\n${caseUrl}`,
     html: shell(`<div style="padding:26px"><div style="font:21px/1.5 Georgia,serif">${esc(answer).replace(/\n/g, "<br>")}</div>

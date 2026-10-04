@@ -20,6 +20,7 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/vnmoorthy/mom-dont-click/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/vnmoorthy/mom-dont-click/actions/workflows/ci.yml/badge.svg"></a>
   <img alt="MIT licence" src="https://img.shields.io/badge/licence-MIT-17130f">
   <img alt="Next.js 16" src="https://img.shields.io/badge/Next.js-16-17130f">
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-17130f">
@@ -174,7 +175,8 @@ sequenceDiagram
 - **Rules decide, the model writes.** `decideLevel()` counts red and amber evidence. The model is handed the level and may only phrase it. A prompt injection inside a scam email cannot talk the verdict down.
 - **It looks, it never types.** On third-party pages the browser only navigates, scrolls and reads the DOM. The one exception is the two training pages this app hosts under `/fake/` (fictional brands), where it types obviously fake details to show what a phishing page asks for next.
 - **A dead link is a finding.** Timeouts, robot checks and unregistered addresses become evidence, not errors. If the pipeline itself fails, the answer is TREAT AS A SCAM.
-- **Shared screens get less.** The live stream carries a sanitised subject and a masked sender. The forwarded text is only served on the case page, behind an unguessable id.
+- **Shared screens get less.** The live stream carries a sanitised subject and a masked sender. The forwarded text and the follow-up conversation go only to the person who sent the message in; everyone else with the link sees the verdict and the evidence.
+- **The sketchiest link gets opened.** A well-known link placed first cannot shield an unknown one behind it.
 - **A heads-up is only claimed when it lands.** A guardian is reached by email and on their own open `/guard` page. The case records an alert only when one of those delivered.
 - **Every tier degrades.** No Kernel key: local Chromium, then plain fetch. No model key: deterministic rules. No Exa key: a built-in list of commonly impersonated brands. No Neon URL: PGlite, real Postgres in-process, same SQL. No AgentMail key: the paste form. The app runs with zero keys.
 - **SSRF guard.** Anything opened from the server itself must resolve to a public address, and nothing a page loads may reach into the private network.
@@ -214,7 +216,7 @@ Open `http://localhost:3000/console` and press `1`. With no keys at all you get 
 | `DATABASE_URL` | Neon Postgres instead of in-process PGlite |
 | `NEON_AI_GATEWAY_BASE_URL` + `NEON_AI_GATEWAY_TOKEN` | The model that reads messages and words verdicts (`OPENAI_API_KEY` or `ANTHROPIC_API_KEY` also work) |
 | `PUBLIC_URL` | The address used in QR codes and emails |
-| `CONSOLE_KEY` | Locks `/console` on a public deployment |
+| `CONSOLE_KEY` | The presenter console's key. Without one, `/console` only works on `localhost` |
 
 ### Deploy to Fly.io
 

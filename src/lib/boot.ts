@@ -29,7 +29,7 @@ async function handleInbound(m: mail.InboundMail): Promise<void> {
     await addMessage({ caseId: existing.id, role: "user", text: question, via: "email" });
     const answer = await answerFollowUp(existing, question, history);
     await addMessage({ caseId: existing.id, role: "assistant", text: answer, via: "email" });
-    await mail.reply(m.inboxId, m.messageId, mail.answerEmail(answer, existing));
+    await mail.reply(m.inboxId, m.messageId, mail.answerEmail(answer, existing), m.threadId);
     return;
   }
   if (existing) return; // still being checked; the verdict reply is on its way

@@ -9,7 +9,7 @@ import { parse } from "node-html-parser";
 import type { Browser, BrowserContext, Page } from "playwright-core";
 import { browserTier, env, runtime } from "./config";
 import { pushFrame } from "./bus";
-import { assertPublicUrl, isOwnTrainingPage, looksInternal, ownHost, safeParse } from "./urls";
+import { assertPublicUrl, isLoopbackUrl, isOwnTrainingPage, looksInternal, resolvesPublic, safeParse } from "./urls";
 import type { BrowserReport } from "./types";
 
 export interface Detonation {
@@ -27,6 +27,8 @@ export interface DetonateHooks {
   onAsk?: (step: number, asks: string[]) => void;
   /** eval runs skip the real browser and never stream frames */
   quiet?: boolean;
+  /** presenter seeds jump the queue so the stage is never starved by the room */
+  priority?: boolean;
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -44,14 +46,18 @@ interface Gate {
 const g = globalThis as unknown as { __mdcGate?: Gate };
 const gate: Gate = (g.__mdcGate ??= { active: 0, waiters: [] });
 const MAX_ACTIVE = 2;
+const MAX_WAITING = 8;
 
-async function acquire(): Promise<void> {
+/** Take a browser slot. Returns false when the line is too long: the caller reads the page without a browser instead. */
+async function acquire(priority = false): Promise<boolean> {
   if (gate.active < MAX_ACTIVE) {
     gate.active++;
-    return;
+    return true;
   }
-  await new Promise<void>((res) => gate.waiters.push(res));
+  if (!priority && gate.waiters.length >= MAX_WAITING) return false;
+  await new Promise<void>((res) => (priority ? gate.waiters.unshift(res) : gate.waiters.push(res)));
   gate.active++;
+  return true;
 }
 function release(): void {
   gate.active = Math.max(0, gate.active - 1);
@@ -366,11 +372,14 @@ async function viaPlaywright(url: string, caseId: string, report: BrowserReport,
     });
     const own = isOwnTrainingPage(url);
     // nothing the page loads may reach into this machine's network
-    await context.route("**/*", (route) => {
+    await context.route("**/*", async (route) => {
       const u = safeParse(route.request().url());
-      if (!u) return route.continue();
-      const sameApp = u.host.toLowerCase() === ownHost() || /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(u.host);
-      if (looksInternal(u.hostname) && !(own && sameApp)) return route.abort();
+      if (!u) return route.continue(); // data:, blob:, about:
+      // our own training page may load its own assets from this app and nothing else internal
+      if (own && isOwnTrainingPage(`${u.protocol}//${u.host}/fake/`)) return route.continue();
+      if (looksInternal(u.hostname)) return route.abort();
+      // names that resolve inward (redirect targets, rebinding) are refused too
+      if (!(await resolvesPublic(u.hostname))) return route.abort();
       return route.continue();
     });
     const page = await context.newPage();
@@ -443,12 +452,17 @@ async function viaFetch(url: string, report: BrowserReport, hooks: DetonateHooks
 /** Open `url` away from the user and report what it does. Never throws. */
 export async function detonate(url: string, caseId: string, hooks: DetonateHooks): Promise<Detonation> {
   const report: BrowserReport = { tier: "none", live: false, redirectChain: [], asksFor: [], steps: [], hasScreenshot: false };
-  const localUrl = /^https?:\/\/(localhost|127\.0\.0\.1)/i.test(url);
+  // only our own training page, on this machine, is ever opened locally when a cloud browser is available
+  const localUrl = isLoopbackUrl(url) && isOwnTrainingPage(url);
   let tier = hooks.quiet ? "fetch" : browserTier();
   if (tier === "kernel" && localUrl) tier = "playwright"; // a cloud browser cannot see this laptop
   const empty = { asksByStep: [[]] as string[][], pageText: "", challenge: false };
 
-  await acquire();
+  const gotSlot = await acquire(!!hooks.priority);
+  if (!gotSlot && tier !== "fetch") {
+    tier = "fetch"; // the room is busy: read the page directly rather than keep someone waiting
+    report.steps.push({ label: "Every browser is busy, so reading the page directly", at: Date.now() });
+  }
   report.startedAt = Date.now();
   let result: Omit<Detonation, "report"> = empty;
   try {
@@ -481,7 +495,7 @@ export async function detonate(url: string, caseId: string, hooks: DetonateHooks
       }
     }
   } finally {
-    release();
+    if (gotSlot) release();
   }
   report.live = false;
   report.liveViewUrl = undefined;

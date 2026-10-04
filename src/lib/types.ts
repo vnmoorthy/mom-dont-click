@@ -108,6 +108,8 @@ export interface CaseRecord {
   guardianAlerted?: { name: string; emailMasked: string; at: number; via?: "email" | "screen" }[];
   durationMs?: number;
   error?: string;
+  /** Server only: the secret that lets the sender read their own forwarded text. Never sent to a browser. */
+  viewToken?: string;
 }
 
 export interface CaseMessage {

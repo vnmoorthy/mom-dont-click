@@ -37,6 +37,8 @@ export interface CaseInput {
   demoMom?: boolean;
   /** eval runs: not stored, not shown, no browser, no email */
   quiet?: boolean;
+  /** fired from the presenter console: goes to the front of the browser queue */
+  priority?: boolean;
 }
 
 interface Ctx {
@@ -97,7 +99,7 @@ async function stepRead(ctx: Ctx): Promise<void> {
     c.claimedBrand = r.claimedBrand;
     c.category = r.category;
     c.pressure = r.pressure;
-    ctx.fps = fingerprints({ primaryUrl: c.primaryUrl, phones: r.phones, text: c.rawText });
+    ctx.fps = fingerprints({ primaryUrl: c.primaryUrl, phones: r.phones, text: c.rawText, claimedBrand: c.claimedBrand });
     const brand = brandByName(c.claimedBrand);
     ctx.officialGuess = c.claimedBrand ? isOfficialDomain(brand, c.domain) : !!knownGoodDomain(c.domain);
     if (r.fromVision) c.evidence.push(ev("vision", "neutral", "Read the text out of the screenshot", "Neon AI Gateway"));
@@ -145,6 +147,7 @@ async function stepOpenLink(ctx: Ctx): Promise<void> {
     let hasAsk = false;
     ctx.det = await detonate(url, c.id, {
       quiet: ctx.quiet,
+      priority: ctx.input.priority,
       onReport: (r) => {
         c.browser = { ...r, steps: [...r.steps], asksFor: [...r.asksFor], redirectChain: [...r.redirectChain] };
         const last = r.steps[r.steps.length - 1]?.label;
@@ -250,6 +253,12 @@ async function stepDecide(ctx: Ctx): Promise<void> {
       unreachable: !!ctx.det?.report.unreachable,
     });
     c.officialUrl = inv.official?.url;
+    // What gets remembered. An address is only remembered as bad when the address itself was implicated
+    // (not just the wording around it), and never when it belongs to a well-known site.
+    const implicated = c.evidence.some(
+      (e) => e.tone === "red" && (e.kind === "browser" || e.kind === "domain" || (e.kind === "search" && /^(Not |No company)/.test(e.title))),
+    );
+    if (!implicated || knownGoodDomain(c.domain) || inv.linkIsOfficial) ctx.fps = ctx.fps.filter((f) => !f.startsWith("d:"));
     if (ctx.unreadable) {
       c.verdict = "TREAT_AS_SCAM";
       c.headline = "Treat this as a scam for now. We could not read the screenshot.";
@@ -279,7 +288,7 @@ async function stepRespond(ctx: Ctx): Promise<void> {
   await traced(ctx, "respond", canMail ? "AgentMail" : "Web", "Sending the answer", async () => {
     if (canMail && c.mail && !c.mail.replied) {
       const m = mail.verdictEmail(c);
-      await mail.reply(c.mail.inboxId, c.mail.messageId, { text: m.text, html: m.html });
+      await mail.reply(c.mail.inboxId, c.mail.messageId, { text: m.text, html: m.html }, c.mail.threadId);
       c.mail.replied = true;
     } else if (canMail && input.notifyEmail) {
       const m = mail.verdictEmail(c);
@@ -439,6 +448,7 @@ function newCase(input: CaseInput): CaseRecord {
     evidence: [],
     trace: [],
     mail: input.mail,
+    viewToken: nanoid(24),
   };
 }
 

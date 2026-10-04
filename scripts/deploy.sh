@@ -10,6 +10,18 @@ URL="https://${APP}.fly.dev"
 fly auth whoami >/dev/null || { echo "Run 'fly auth login' first."; exit 1; }
 fly apps list 2>/dev/null | awk '{print $1}' | grep -qx "$APP" || fly apps create "$APP"
 
+# the presenter console must never be open on the internet: make a key if there is none
+touch .env.local
+if ! grep -qE '^CONSOLE_KEY=.+' .env.local; then
+  KEY="$(openssl rand -hex 12)"
+  if grep -qE '^CONSOLE_KEY=' .env.local; then
+    sed -i.bak "s/^CONSOLE_KEY=.*/CONSOLE_KEY=${KEY}/" .env.local && rm -f .env.local.bak
+  else
+    printf '\nCONSOLE_KEY=%s\n' "$KEY" >> .env.local
+  fi
+  echo "Generated a CONSOLE_KEY and saved it to .env.local"
+fi
+
 # every KEY=value line with a value, except PUBLIC_URL (set to the app's address) and dev-only flags
 SECRETS=("PUBLIC_URL=${URL}")
 if [ -f .env.local ]; then
@@ -25,3 +37,4 @@ fly secrets set --app "$APP" --stage "${SECRETS[@]}" >/dev/null
 
 fly deploy --app "$APP" --ha=false --build-arg "PUBLIC_URL=${URL}"
 echo "Live at ${URL}"
+echo "Presenter console: ${URL}/console?key=$(grep -E '^CONSOLE_KEY=' .env.local | cut -d= -f2-)"

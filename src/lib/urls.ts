@@ -117,9 +117,32 @@ export function ownHost(): string {
 export function isOwnTrainingPage(url: string): boolean {
   const u = safeParse(url);
   if (!u) return false;
-  const host = u.host.toLowerCase();
-  const local = /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(host);
-  return (host === ownHost() || (local && /^(localhost|127\.0\.0\.1)/.test(ownHost()))) && u.pathname.startsWith("/fake/");
+  if (!u.pathname.startsWith("/fake/")) return false;
+  // same host AND port as this app; localhost and 127.0.0.1 are the same machine
+  const norm = (h: string) => h.toLowerCase().replace(/^127\.0\.0\.1(?=:|$)/, "localhost");
+  return norm(u.host) === norm(ownHost());
+}
+
+/** This machine, by its exact name (not "localhost.evil.example"). */
+export function isLoopbackUrl(url: string): boolean {
+  const u = safeParse(url);
+  return !!u && /^(localhost|127\.0\.0\.1|\[::1\])$/i.test(u.hostname);
+}
+
+const publicHostCache = new Map<string, { ok: boolean; at: number }>();
+
+/** Does this hostname resolve only to public addresses? Cached briefly; used on every browser sub-request. */
+export async function resolvesPublic(hostname: string): Promise<boolean> {
+  const h = hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  if (looksInternal(h)) return false;
+  if (net.isIP(h)) return true;
+  const hit = publicHostCache.get(h);
+  if (hit && Date.now() - hit.at < 60_000) return hit.ok;
+  const addrs = await dns.lookup(h, { all: true }).catch(() => []);
+  const ok = addrs.length > 0 && !addrs.some((a) => isPrivateIp(a.address));
+  if (publicHostCache.size > 2000) publicHostCache.clear();
+  publicHostCache.set(h, { ok, at: Date.now() });
+  return ok;
 }
 
 function isPrivateIp(ip: string): boolean {
@@ -127,7 +150,7 @@ function isPrivateIp(ip: string): boolean {
     const [a, b] = ip.split(".").map(Number);
     return (
       a === 10 || a === 127 || a === 0 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) ||
-      (a === 169 && b === 254) || (a === 100 && b >= 64 && b <= 127) || a >= 224
+      (a === 169 && b === 254) || (a === 100 && b >= 64 && b <= 127) || (a === 198 && (b === 18 || b === 19)) || a >= 224
     );
   }
   const v6 = ip.toLowerCase();

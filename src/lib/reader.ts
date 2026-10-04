@@ -3,7 +3,7 @@
 // deterministic rules otherwise (and always as a safety net).
 import { parse } from "node-html-parser";
 import { chatJSON, llmAvailable } from "./llm";
-import { findBrand } from "./brands";
+import { findBrand, knownGoodDomain } from "./brands";
 import { SHORTENERS, domainOf, extractUrls, safeParse, unwrapRedirector } from "./urls";
 
 export interface ReadInput {
@@ -214,6 +214,10 @@ export async function readMessage(input: ReadInput): Promise<ReadResult> {
   } else if (candidates.length) {
     primaryUrl = pickPrimary(candidates);
   }
+  // A well-known site placed first must not shield a second, unknown link: if any link goes
+  // somewhere we do not recognise, that is the one to open. Neither link order nor the model can override this.
+  const unknown = candidates.filter((cand) => !knownGoodDomain(domainOf(cand.href)));
+  if (unknown.length && (!primaryUrl || knownGoodDomain(domainOf(primaryUrl)))) primaryUrl = pickPrimary(unknown);
 
   // a pasted message has no subject of its own: use a "Subject:" header if one was pasted, else its first real line
   const headerSubject = text.match(/^\s*subject:\s*(.+)$/im)?.[1];
@@ -250,7 +254,7 @@ export async function readMessage(input: ReadInput): Promise<ReadResult> {
 }
 
 /** Fingerprints used for "seen before". Most specific first. */
-export function fingerprints(r: { primaryUrl?: string; phones: string[]; text: string }): string[] {
+export function fingerprints(r: { primaryUrl?: string; phones: string[]; text: string; claimedBrand?: string }): string[] {
   const out: string[] = [];
   if (r.primaryUrl) {
     const u = safeParse(r.primaryUrl);
@@ -258,7 +262,9 @@ export function fingerprints(r: { primaryUrl?: string; phones: string[]; text: s
     if (u && d && !SHORTENERS.has(u.hostname.toLowerCase())) {
       // on our own host the path identifies the page; elsewhere the domain is enough
       const seg = u.pathname.split("/").filter(Boolean).slice(0, 2).join("/");
-      out.push(u.pathname.startsWith("/fake/") ? `u:${u.host}/${seg}` : `d:${d}`);
+      // address plus the claimed sender: the same scam matches, a different message about the same site does not
+      const who = (r.claimedBrand ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+      out.push(u.pathname.startsWith("/fake/") ? `u:${u.host}/${seg}` : `d:${d}|${who}`);
     }
   }
   if (!r.primaryUrl && r.phones[0]) out.push(`p:${r.phones[0]}`);

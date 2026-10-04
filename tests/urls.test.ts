@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { defang, extractUrls, looksInternal, registrableDomain, unwrapRedirector, isOwnTrainingPage, maskEmail, parseAddress } from "@/lib/urls";
+import { defang, extractUrls, looksInternal, registrableDomain, unwrapRedirector, isLoopbackUrl, isOwnTrainingPage, maskEmail, parseAddress } from "@/lib/urls";
 
 describe("registrableDomain", () => {
   it("strips sub-names", () => {
@@ -54,6 +54,12 @@ describe("training pages", () => {
     expect(isOwnTrainingPage("http://localhost:3000/fake/parcelfast")).toBe(true);
     expect(isOwnTrainingPage("http://localhost:3000/console")).toBe(false);
     expect(isOwnTrainingPage("https://evil.example/fake/parcelfast")).toBe(false);
+    // another port on this machine is not this app
+    expect(isOwnTrainingPage("http://localhost:8080/fake/parcelfast")).toBe(false);
+    expect(isOwnTrainingPage("http://127.0.0.1:3000/fake/parcelfast")).toBe(true);
+    // a lookalike of "localhost" is somebody else's server
+    expect(isLoopbackUrl("http://localhost.evil.example/fake/x")).toBe(false);
+    expect(isLoopbackUrl("http://localhost:3000/fake/x")).toBe(true);
   });
 });
 

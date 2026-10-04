@@ -206,10 +206,11 @@ export function useCase(id: string): {
   }, [refresh]);
 
   useEffect(() => {
+    // the shared stream only announces that a message was added; the text comes from our own fetch
     const m = live.lastMessage;
     if (!m || m.caseId !== id) return;
-    setMessages((prev) => (prev.some((p) => p.id === m.id) ? prev : [...prev, m]));
-  }, [live.lastMessage, id]);
+    refresh();
+  }, [live.lastMessage, id, refresh]);
 
   // the stream carries no raw text (it feeds shared screens); keep the copy this page fetched
   const fresh = live.byId[id];

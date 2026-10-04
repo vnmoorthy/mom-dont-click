@@ -35,7 +35,25 @@ describe("readMessage (rules only, no model configured)", () => {
   });
 });
 
+describe("decoy links", () => {
+  it("opens the unknown link even when a well-known one comes first", async () => {
+    const r = await readMessage({
+      text: "PayPal: confirm your account at https://www.paypal.com/signin or use the secure portal https://paypal-resolve.top/login",
+    });
+    expect(r.primaryUrl).toBe("https://paypal-resolve.top/login");
+  });
+  it("keeps a well-known link when it is the only one", async () => {
+    const r = await readMessage({ text: "Track your package: https://www.amazon.com/gp/css/order-history" });
+    expect(r.primaryUrl).toBe("https://www.amazon.com/gp/css/order-history");
+  });
+});
+
 describe("fingerprints: seen before", () => {
+  it("keys an address by who the message claims to be, so one bad message cannot poison a site", () => {
+    const scam = fingerprints({ primaryUrl: "https://acme.example/login", phones: [], text: "x", claimedBrand: "PayPal" });
+    const genuine = fingerprints({ primaryUrl: "https://acme.example/login", phones: [], text: "y", claimedBrand: "Acme" });
+    expect(scam[0]).not.toBe(genuine[0]);
+  });
   it("is stable for the same address and differs across addresses", () => {
     const a = fingerprints({ primaryUrl: "https://toll-pay.top/i/1", phones: [], text: "x" });
     const b = fingerprints({ primaryUrl: "https://toll-pay.top/i/2", phones: [], text: "y" });

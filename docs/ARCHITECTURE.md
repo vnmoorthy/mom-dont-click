@@ -104,7 +104,7 @@ Rules that hold on every tier:
 
 ## Memory
 
-"Seen before" uses up to three fingerprints per case, most specific first: the registrable domain of the link, the phone number when there is no link, and a hash of the normalised text. A match against a scam verdict from the last seven days short-circuits the workflow: the verdict, reasons and strongest evidence are copied, and the case finishes in well under two seconds.
+"Seen before" uses up to three fingerprints per case, most specific first: the registrable domain of the link together with the claimed brand, the phone number when there is no link, and a hash of the normalised text. A domain is only remembered when the address itself was implicated, and never when it belongs to a well-known site. A match against a scam verdict from the last seven days short-circuits the workflow: the verdict, reasons and strongest evidence are copied, and the case finishes in well under two seconds.
 
 ## Data
 
@@ -121,7 +121,7 @@ Five small tables, created on first use (`src/lib/db.ts`). The same SQL runs on 
 ## Privacy
 
 - The live stream and the case list never carry the forwarded text, and always mask the sender.
-- The forwarded text is served only by `GET /api/cases/:id`, behind a 12-character random id.
+- The forwarded text and the follow-up conversation are served by `GET /api/cases/:id` only to the sender: the browser that created the case holds an HttpOnly cookie, and the verdict email carries a one-case token. Anyone else with the id gets the verdict and the evidence.
 - The wall shows a subject line with names, addresses, phone numbers and tracking codes removed.
 - Guardian addresses are masked everywhere they are displayed.
 - Suspicious addresses are printed defanged (`hxxps://evil[.]example`) and are never rendered as links.

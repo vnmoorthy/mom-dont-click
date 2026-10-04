@@ -1,0 +1,48 @@
+{
+  "name": "mom-dont-click",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "shots": "node scripts/shots.mjs && node scripts/hero.mjs"
+  },
+  "dependencies": {
+    "@assistant-ui/react": "^0.15.23",
+    "@electric-sql/pglite": "^0.5.8",
+    "@mastra/core": "^1.74.0",
+    "@neondatabase/serverless": "^1.2.0",
+    "@onkernel/sdk": "^0.119.0",
+    "agentmail": "^0.5.35",
+    "lucide-react": "^1.52.0",
+    "motion": "^14.0.0",
+    "nanoid": "^6.0.1",
+    "next": "16.3.8",
+    "node-html-parser": "^9.0.4",
+    "playwright-core": "^1.63.0",
+    "qrcode": "^1.5.4",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vitest": "^5.0.3"
+  },
+  "packageManager": "pnpm@10.33.2",
+  "description": "One email address your mom forwards anything sketchy to. An agent clicks the link for her in a throwaway cloud browser and answers in one giant plain sentence.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vnmoorthy/mom-dont-click.git"
+  }
+}

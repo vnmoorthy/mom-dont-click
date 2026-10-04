@@ -1,0 +1,243 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1480 900" width="1480" height="900" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 10 5 0 10z" fill="#17130f"/>
+    </marker>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 10 5 0 10z" fill="#e8391c"/>
+    </marker>
+    <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="1" fill="#17130f" opacity=".06"/>
+    </pattern>
+  </defs>
+
+  <rect width="1480" height="900" fill="#f6f0e4"/>
+  <rect width="1480" height="900" fill="url(#dots)"/>
+
+  <!-- title -->
+  <g transform="translate(48 44)">
+    <rect width="40" height="40" rx="11" fill="#e8391c"/>
+    <path d="M13 9v20c0 .9 1 1.300 1.600.700l4.800-5.200 3.400 7.500c.3.600.9.800 1.500.600l2.200-1c.6-.3.800-.9.600-1.500L23.700 23h6.700c.9 0 1.300-1 .7-1.600L14.600 8.300c-.6-.6-1.600-.2-1.600.7Z" fill="#f6f0e4"/>
+    <path d="M7 34 33 7" stroke="#17130f" stroke-width="4.500" stroke-linecap="round"/>
+    <text x="56" y="19" font-size="24" font-weight="800" fill="#17130f">Mom, Don't Click</text>
+    <text x="56" y="39" font-size="14" fill="#62574a">Architecture: one forwardable address, one workflow, three answers</text>
+  </g>
+
+  <!-- column labels -->
+  <g font-size="12" font-weight="700" letter-spacing="1.500" fill="#8c8070">
+    <text x="48" y="138">HOW IT ARRIVES</text>
+    <text x="318" y="138">THE AGENT · MASTRA WORKFLOW · RUNS ON FLY.IO</text>
+    <text x="1222" y="138">WHAT COMES BACK</text>
+  </g>
+
+  <!-- inputs -->
+  <g font-size="15" fill="#17130f">
+    <g transform="translate(48 156)">
+      <rect width="218" height="92" rx="16" fill="#fffdf8" stroke="#d6cab3" stroke-width="1.500"/>
+      <text x="18" y="34" font-weight="700">Forwarded email</text>
+      <text x="18" y="56" font-size="13" fill="#62574a">Mom forwards anything</text>
+      <text x="18" y="74" font-size="13" fill="#62574a">sketchy to one address</text>
+      <rect x="126" y="-11" width="92" height="22" rx="11" fill="#17130f"/>
+      <text x="172" y="4" font-size="11" font-weight="700" fill="#f6f0e4" text-anchor="middle">AgentMail</text>
+    </g>
+    <g transform="translate(48 276)">
+      <rect width="218" height="92" rx="16" fill="#fffdf8" stroke="#d6cab3" stroke-width="1.500"/>
+      <text x="18" y="34" font-weight="700">Pasted link or text</text>
+      <text x="18" y="56" font-size="13" fill="#62574a">/check, reached by the</text>
+      <text x="18" y="74" font-size="13" fill="#62574a">QR code on the wall</text>
+    </g>
+    <g transform="translate(48 396)">
+      <rect width="218" height="92" rx="16" fill="#fffdf8" stroke="#d6cab3" stroke-width="1.500"/>
+      <text x="18" y="34" font-weight="700">Screenshot of a text</text>
+      <text x="18" y="56" font-size="13" fill="#62574a">read with a vision model</text>
+      <text x="18" y="74" font-size="13" fill="#62574a">through the AI gateway</text>
+    </g>
+  </g>
+  <g stroke="#17130f" stroke-width="1.800" fill="none" marker-end="url(#arrow)">
+    <path d="M266 202 C292 202 292 300 316 300"/>
+    <path d="M266 322 H316"/>
+    <path d="M266 442 C292 442 292 344 316 344"/>
+  </g>
+
+  <!-- workflow container -->
+  <rect x="318" y="156" width="868" height="444" rx="26" fill="#17130f"/>
+  <g font-size="15" fill="#f6f0e4">
+    <!-- read -->
+    <g transform="translate(342 262)">
+      <rect width="150" height="120" rx="16" fill="#241e19" stroke="#3a3129" stroke-width="1.500"/>
+      <text x="16" y="30" font-size="11" font-weight="700" letter-spacing="1.200" fill="#8f8473">STEP 1</text>
+      <text x="16" y="54" font-weight="700">read-message</text>
+      <text x="16" y="76" font-size="12.500" fill="#cfc4b0">the link that matters,</text>
+      <text x="16" y="93" font-size="12.500" fill="#cfc4b0">claimed brand, the</text>
+      <text x="16" y="110" font-size="12.500" fill="#cfc4b0">pressure language</text>
+    </g>
+    <text x="417" y="402" font-size="11.500" fill="#8f8473" text-anchor="middle">Neon AI Gateway</text>
+
+    <!-- recall -->
+    <g transform="translate(522 262)">
+      <rect width="130" height="120" rx="16" fill="#241e19" stroke="#3a3129" stroke-width="1.500"/>
+      <text x="16" y="30" font-size="11" font-weight="700" letter-spacing="1.200" fill="#8f8473">STEP 2</text>
+      <text x="16" y="54" font-weight="700">recall</text>
+      <text x="16" y="76" font-size="12.500" fill="#cfc4b0">seen this exact</text>
+      <text x="16" y="93" font-size="12.500" fill="#cfc4b0">scam before?</text>
+    </g>
+    <text x="587" y="402" font-size="11.500" fill="#8f8473" text-anchor="middle">Neon Postgres</text>
+
+    <!-- parallel block -->
+    <rect x="682" y="200" width="214" height="374" rx="20" fill="none" stroke="#f2a417" stroke-width="1.500" stroke-dasharray="6 6"/>
+    <text x="789" y="220" font-size="11" font-weight="700" letter-spacing="1.500" fill="#f2a417" text-anchor="middle">STEP 3 · IN PARALLEL</text>
+    <g transform="translate(698 240)">
+      <rect width="182" height="92" rx="14" fill="#e8391c"/>
+      <text x="14" y="26" font-weight="700">open-link</text>
+      <text x="14" y="46" font-size="12.500" fill="#fbe0d8">throwaway cloud browser:</text>
+      <text x="14" y="62" font-size="12.500" fill="#fbe0d8">redirects, what the page</text>
+      <text x="14" y="78" font-size="12.500" fill="#fbe0d8">asks for, live view</text>
+      <rect x="118" y="-10" width="64" height="20" rx="10" fill="#f6f0e4"/>
+      <text x="150" y="4" font-size="11" font-weight="700" fill="#17130f" text-anchor="middle">Kernel</text>
+    </g>
+    <g transform="translate(698 350)">
+      <rect width="182" height="92" rx="14" fill="#241e19" stroke="#3a3129" stroke-width="1.500"/>
+      <text x="14" y="28" font-weight="700">check-claims</text>
+      <text x="14" y="50" font-size="12.500" fill="#cfc4b0">the brand's own site,</text>
+      <text x="14" y="67" font-size="12.500" fill="#cfc4b0">existing scam reports</text>
+      <rect x="134" y="-10" width="48" height="20" rx="10" fill="#f6f0e4"/>
+      <text x="158" y="4" font-size="11" font-weight="700" fill="#17130f" text-anchor="middle">Exa</text>
+    </g>
+    <g transform="translate(698 460)">
+      <rect width="182" height="100" rx="14" fill="#241e19" stroke="#3a3129" stroke-width="1.500"/>
+      <text x="14" y="28" font-weight="700">check-address</text>
+      <text x="14" y="50" font-size="12.500" fill="#cfc4b0">age of the website,</text>
+      <text x="14" y="67" font-size="12.500" fill="#cfc4b0">lookalike tricks,</text>
+      <text x="14" y="84" font-size="12.500" fill="#cfc4b0">free hosting</text>
+      <rect x="126" y="-10" width="56" height="20" rx="10" fill="#f6f0e4"/>
+      <text x="154" y="4" font-size="11" font-weight="700" fill="#17130f" text-anchor="middle">RDAP</text>
+    </g>
+
+    <!-- decide -->
+    <g transform="translate(926 262)">
+      <rect width="118" height="120" rx="16" fill="#241e19" stroke="#3a3129" stroke-width="1.500"/>
+      <text x="14" y="30" font-size="11" font-weight="700" letter-spacing="1.200" fill="#8f8473">STEP 4</text>
+      <text x="14" y="54" font-weight="700">decide</text>
+      <text x="14" y="76" font-size="12.500" fill="#cfc4b0">rules set the</text>
+      <text x="14" y="93" font-size="12.500" fill="#cfc4b0">level, the model</text>
+      <text x="14" y="110" font-size="12.500" fill="#cfc4b0">picks the words</text>
+    </g>
+    <text x="985" y="402" font-size="11.500" fill="#8f8473" text-anchor="middle">Rules + AI Gateway</text>
+
+    <!-- respond -->
+    <g transform="translate(1068 262)">
+      <rect width="98" height="120" rx="16" fill="#241e19" stroke="#3a3129" stroke-width="1.500"/>
+      <text x="14" y="30" font-size="11" font-weight="700" letter-spacing="1.200" fill="#8f8473">STEP 5</text>
+      <text x="14" y="54" font-weight="700">respond</text>
+      <text x="14" y="76" font-size="12.500" fill="#cfc4b0">reply, alert,</text>
+      <text x="14" y="93" font-size="12.500" fill="#cfc4b0">store</text>
+    </g>
+    <text x="1117" y="402" font-size="11.500" fill="#8f8473" text-anchor="middle">AgentMail</text>
+  </g>
+
+  <!-- workflow arrows -->
+  <defs>
+    <marker id="arrow-cream" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 10 5 0 10z" fill="#f6f0e4"/>
+    </marker>
+    <marker id="arrow-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 10 5 0 10z" fill="#f2a417"/>
+    </marker>
+  </defs>
+  <g stroke="#f6f0e4" stroke-width="1.800" fill="none" marker-end="url(#arrow-cream)">
+    <path d="M492 322 H520"/>
+    <path d="M652 322 H680"/>
+    <path d="M896 322 H924"/>
+    <path d="M1044 322 H1066"/>
+  </g>
+  <!-- seen-before shortcut -->
+  <path d="M587 262 V190 Q587 178 599 178 H1105 Q1117 178 1117 190 V258" stroke="#f2a417" stroke-width="1.800" fill="none" stroke-dasharray="5 5" marker-end="url(#arrow-amber)"/>
+  <rect x="716" y="166" width="246" height="24" rx="12" fill="#17130f" stroke="#f2a417" stroke-width="1.200"/>
+  <text x="839" y="183" font-size="12" font-weight="700" fill="#f2a417" text-anchor="middle">seen before: answered in under 2 s</text>
+
+  <!-- workflow footer -->
+  <text x="342" y="436" font-size="12.500" fill="#8f8473">
+    <tspan x="342" dy="0">Every step is traced.</tspan>
+    <tspan x="342" dy="18">If a step fails the answer is</tspan>
+    <tspan x="342" dy="18" fill="#f2a417" font-weight="700">TREAT AS A SCAM.</tspan>
+  </text>
+  <text x="342" y="516" font-size="12.500" fill="#8f8473">
+    <tspan x="342" dy="0">The browser only looks.</tspan>
+    <tspan x="342" dy="18">It types fake details in one</tspan>
+    <tspan x="342" dy="18">place: our own training pages.</tspan>
+  </text>
+
+  <!-- outputs -->
+  <g stroke="#17130f" stroke-width="1.800" fill="none" marker-end="url(#arrow)">
+    <path d="M1166 300 C1196 300 1192 202 1220 202"/>
+    <path d="M1166 322 H1220"/>
+    <path d="M1166 344 C1196 344 1192 442 1220 442"/>
+  </g>
+  <g font-size="15" fill="#17130f">
+    <g transform="translate(1222 156)">
+      <rect width="210" height="92" rx="16" fill="#e8391c"/>
+      <text x="18" y="32" font-weight="800" fill="#f6f0e4">One giant sentence</text>
+      <text x="18" y="54" font-size="13" fill="#fbe0d8">a reply in the same email</text>
+      <text x="18" y="72" font-size="13" fill="#fbe0d8">thread, with three reasons</text>
+    </g>
+    <g transform="translate(1222 276)">
+      <rect width="210" height="92" rx="16" fill="#fffdf8" stroke="#d6cab3" stroke-width="1.500"/>
+      <text x="18" y="32" font-weight="700">Guardian heads-up</text>
+      <text x="18" y="54" font-size="13" fill="#62574a">"Mom was sent a parcel</text>
+      <text x="18" y="72" font-size="13" fill="#62574a">scam. She did not click."</text>
+    </g>
+    <g transform="translate(1222 396)">
+      <rect width="210" height="92" rx="16" fill="#fffdf8" stroke="#d6cab3" stroke-width="1.500"/>
+      <text x="18" y="32" font-weight="700">The wall and case page</text>
+      <text x="18" y="54" font-size="13" fill="#62574a">live browser, evidence,</text>
+      <text x="18" y="72" font-size="13" fill="#62574a">verdict, over SSE</text>
+      <rect x="110" y="-11" width="100" height="22" rx="11" fill="#17130f"/>
+      <text x="160" y="4" font-size="11" font-weight="700" fill="#f6f0e4" text-anchor="middle">assistant-ui</text>
+    </g>
+  </g>
+
+  <!-- data layer -->
+  <g transform="translate(318 632)">
+    <rect width="868" height="76" rx="18" fill="#fffdf8" stroke="#17130f" stroke-width="1.800"/>
+    <text x="24" y="32" font-size="16" font-weight="800" fill="#17130f">Neon Postgres</text>
+    <text x="24" y="55" font-size="13.500" fill="#62574a">cases and evidence (jsonb) · final screenshots · guardians · follow-up messages · "seen before" fingerprints</text>
+    <rect x="770" y="-11" width="76" height="22" rx="11" fill="#17130f"/>
+    <text x="808" y="4" font-size="11" font-weight="700" fill="#f6f0e4" text-anchor="middle">Neon</text>
+  </g>
+  <g stroke="#17130f" stroke-width="1.800" fill="none" marker-end="url(#arrow)" marker-start="url(#arrow)">
+    <path d="M587 602 V630"/>
+    <path d="M1117 602 V630"/>
+  </g>
+
+  <!-- fallbacks -->
+  <g transform="translate(48 744)">
+    <text font-size="12" font-weight="700" letter-spacing="1.500" fill="#8c8070">EVERY TIER DEGRADES, SO IT RUNS WITH ZERO KEYS</text>
+    <g font-size="13.500" fill="#17130f" transform="translate(0 22)">
+      <g>
+        <rect width="262" height="58" rx="14" fill="#ede5d4"/>
+        <text x="16" y="24" font-weight="700">Browser</text>
+        <text x="16" y="44" font-size="12.500" fill="#62574a">Kernel &gt; local Chromium &gt; fetch</text>
+      </g>
+      <g transform="translate(278 0)">
+        <rect width="262" height="58" rx="14" fill="#ede5d4"/>
+        <text x="16" y="24" font-weight="700">Reader and writer</text>
+        <text x="16" y="44" font-size="12.500" fill="#62574a">AI Gateway &gt; deterministic rules</text>
+      </g>
+      <g transform="translate(556 0)">
+        <rect width="262" height="58" rx="14" fill="#ede5d4"/>
+        <text x="16" y="24" font-weight="700">Web search</text>
+        <text x="16" y="44" font-size="12.500" fill="#62574a">Exa &gt; built-in list of faked brands</text>
+      </g>
+      <g transform="translate(834 0)">
+        <rect width="262" height="58" rx="14" fill="#ede5d4"/>
+        <text x="16" y="24" font-weight="700">Database</text>
+        <text x="16" y="44" font-size="12.500" fill="#62574a">Neon &gt; PGlite in-process, same SQL</text>
+      </g>
+      <g transform="translate(1112 0)">
+        <rect width="272" height="58" rx="14" fill="#ede5d4"/>
+        <text x="16" y="24" font-weight="700">Inbox</text>
+        <text x="16" y="44" font-size="12.500" fill="#62574a">AgentMail &gt; paste form and screenshots</text>
+      </g>
+    </g>
+  </g>
+</svg>

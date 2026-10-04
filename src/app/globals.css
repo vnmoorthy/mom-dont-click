@@ -1,0 +1,135 @@
+@import "tailwindcss";
+
+/*
+  Mom, Don't Click — design tokens.
+  Concept: a note on the kitchen table meets a forensic lab.
+  Paper + ink for anything mom reads. Night + signal colours for the wall.
+  There is deliberately no green: the agent never says "safe".
+*/
+@theme {
+  --color-paper: #f6f0e4;
+  --color-paper-2: #ede5d4;
+  --color-paper-3: #e2d8c3;
+  --color-line: #d6cab3;
+  --color-ink: #17130f;
+  --color-ink-2: #2f2820;
+  --color-ink-3: #62574a;
+  --color-ink-4: #8c8070;
+
+  --color-night: #0d0b09;
+  --color-night-2: #171310;
+  --color-night-3: #241e19;
+  --color-night-4: #3a3129;
+  --color-cream: #f6f0e4;
+  --color-cream-2: #cfc4b0;
+  --color-cream-3: #8f8473;
+
+  --color-scam: #e8391c;
+  --color-scam-deep: #a8230d;
+  --color-scam-soft: #fbe0d8;
+  --color-warn: #f2a417;
+  --color-warn-deep: #a86c00;
+  --color-warn-soft: #fcecc8;
+  --color-calm: #5d7186;
+  --color-calm-deep: #3c4c5c;
+  --color-calm-soft: #dfe6ec;
+
+  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-instrument), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, monospace;
+
+  --radius-card: 22px;
+  --ease-slam: cubic-bezier(0.2, 1.4, 0.3, 1);
+  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --animate-slam: slam 520ms var(--ease-slam) both;
+  --animate-rise: rise 480ms var(--ease-out-soft) both;
+  --animate-pulse-dot: pulse-dot 1.4s ease-in-out infinite;
+  --animate-scan: scan 2.4s linear infinite;
+  --animate-marquee: marquee 40s linear infinite;
+  --animate-shake: shake 420ms ease-in-out both;
+}
+
+@keyframes slam {
+  0% { transform: scale(2.2) rotate(-4deg); opacity: 0; filter: blur(8px); }
+  60% { transform: scale(0.96) rotate(0.5deg); opacity: 1; filter: blur(0); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+@keyframes rise {
+  from { transform: translateY(14px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.8); }
+}
+@keyframes scan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
+}
+
+html {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--font-sans);
+  min-height: 100dvh;
+}
+
+::selection {
+  background: var(--color-scam);
+  color: var(--color-cream);
+}
+
+/* Subtle paper grain used on light surfaces */
+.paper-grain {
+  background-image:
+    radial-gradient(rgba(23, 19, 15, 0.045) 1px, transparent 1px),
+    radial-gradient(rgba(23, 19, 15, 0.03) 1px, transparent 1px);
+  background-size: 22px 22px, 31px 31px;
+  background-position: 0 0, 11px 17px;
+}
+
+/* Night surface used by the wall */
+.night-grain {
+  background-color: var(--color-night);
+  background-image:
+    radial-gradient(1200px 600px at 80% -10%, rgba(232, 57, 28, 0.1), transparent 60%),
+    radial-gradient(900px 500px at 0% 110%, rgba(242, 164, 23, 0.06), transparent 60%),
+    radial-gradient(rgba(246, 240, 228, 0.035) 1px, transparent 1px);
+  background-size: auto, auto, 24px 24px;
+}
+
+.font-display { font-family: var(--font-display); font-variation-settings: "opsz" 96, "wdth" 92; }
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* A defanged URL should never look clickable */
+.defanged {
+  font-family: var(--font-mono);
+  word-break: break-all;
+  text-decoration: none;
+  cursor: text;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -8,7 +8,8 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "shots": "node scripts/shots.mjs && node scripts/hero.mjs"
+    "shots": "node scripts/shots.mjs && node scripts/hero.mjs",
+    "demo": "next build && next start -H 0.0.0.0 -p 3000"
   },
   "dependencies": {
     "@assistant-ui/react": "^0.15.23",

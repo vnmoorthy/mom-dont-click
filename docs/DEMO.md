@@ -2,6 +2,11 @@
 
 Two versions: the 2-minute stage cut and the 10-minute table demo. Both run from the presenter console.
 
+## Where to run it from
+
+- **Deployed (best):** `scripts/deploy.sh` puts it on Fly.io and prints the console address with its key. Open the wall from the deployed address so the QR code works for every phone.
+- **From your laptop:** run `pnpm demo` (a production build, not the dev server). Open the console at `http://localhost:3000/console`, and open the wall at your laptop's network address, for example `http://192.168.1.20:3000/wall`. The QR code then points at that address, and any phone on the same network can paste a link. The console only answers on `localhost`, so nobody in the room can reset your wall.
+
 ## Setup (5 minutes before)
 
 1. Open **`/console`** on your laptop. Every row in the capability panel should be coloured, not amber. Amber rows still work, on a local fallback.
